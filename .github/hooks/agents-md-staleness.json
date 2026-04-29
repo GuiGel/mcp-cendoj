@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": ".github/hooks/scripts/agents-md-staleness.sh",
+        "osx": ".github/hooks/scripts/agents-md-staleness.sh",
+        "linux": ".github/hooks/scripts/agents-md-staleness.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}

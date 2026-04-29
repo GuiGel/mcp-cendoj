@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": ".github/hooks/scripts/auto-lint.sh",
+        "osx": ".github/hooks/scripts/auto-lint.sh",
+        "linux": ".github/hooks/scripts/auto-lint.sh",
+        "timeout": 30
+      }
+    ]
+  }
+}
