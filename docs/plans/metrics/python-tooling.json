@@ -147,6 +147,8 @@
     "drift_score": 1.0,
     "merge": {
       "branch": "main",
+      "merge_commit": "91cf7b9",
+      "timestamp": "2026-04-29",
       "note": "Initial commit — no PR/MR needed (no prior base branch)"
     }
   }
