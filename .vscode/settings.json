@@ -1,0 +1,41 @@
+{
+    "[python]": {
+        "editor.defaultFormatter":  "charliermarsh.ruff",  //"ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "editor.formatOnSave": "explicit"
+        }
+    },
+
+    "ruff.enable": true,
+    "ruff.fixAll": true,
+    "ruff.importStrategy": "fromEnvironment",
+
+    "editor.rulers": [
+        88
+    ],
+
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+
+    "workbench.colorCustomizations": {
+        "titleBar.activeBackground":"#1eeef5",
+        "titleBar.activeForeground": "#0a0f02"
+    },
+    "editor.detectIndentation": false,
+    "editor.tabSize": 4,
+    "window.zoomLevel": -0.9,
+
+
+    "terminal.integrated.env.osx": {
+        "SHELL_SESSIONS_DISABLE": "1"
+    },
+    "terminal.integrated.profiles.osx": {
+        "zsh (login)": {
+            "path": "/bin/zsh",
+            "args": ["-l"]
+        }
+    },
+    "terminal.integrated.defaultProfile.osx": "zsh (login)"
+}

@@ -1,0 +1,122 @@
+[project]
+name = "mcp-cendoj"
+dynamic = ["version"]
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Guillaume Gelabert", email = "guigelabert@tirant.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+mcp-cendoj = "mcp_cendoj:main"
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.0.0"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9",
+    "pyright>=1.1",
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "coverage[toml]>=7.0",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff — formatting & linting
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = [
+    "RUF100", # unused-noqa
+    "C90",    # mccabe complexity
+    "UP",     # pyupgrade
+    "I",      # isort
+    "D",      # pydocstyle
+    "DTZ005", # datetime-now-without-tzinfo
+]
+ignore = [
+    "D100", # missing docstring in public module
+    "D104", # missing docstring in public package
+    "D105", # missing docstring in magic methods
+    "D107", # missing docstring in __init__
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+multiline-quotes = "double"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["mcp_cendoj"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 14
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D"]
+
+[tool.ruff.format]
+docstring-code-format = true
+quote-style = "single"
+
+# ---------------------------------------------------------------------------
+# Pyright — static type checking
+# ---------------------------------------------------------------------------
+
+[tool.pyright]
+typeCheckingMode = "strict"
+reportUnnecessaryTypeIgnoreComment = true
+reportMissingTypeStubs = false
+include = ["src", "tests"]
+venvPath = "."
+venv = ".venv"
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+xfail_strict = true
+addopts = "--tb=short"
+testpaths = ["tests"]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+branch = true
+source = ["mcp_cendoj"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
+precision = 2
+fail_under = 80
+exclude_lines = [
+    'def __repr__',
+    'pragma: no cover',
+    'raise NotImplementedError',
+    'if TYPE_CHECKING:',
+    'if typing.TYPE_CHECKING:',
+    '@overload',
+    '@abstractmethod',
+    '@abc.abstractmethod',
+    '@typing.overload',
+    '\(Protocol\):$',
+    'if __name__ == .__main__.:',
+]

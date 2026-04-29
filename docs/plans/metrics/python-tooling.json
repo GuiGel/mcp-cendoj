@@ -1,0 +1,153 @@
+{
+  "plan": "python-tooling",
+  "validated_at": "2026-04-29",
+  "validation": {
+    "issues": [
+      {
+        "id": "P-001",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "correctness",
+        "description": "testcov: coverage combine exits 1 (No data to combine) without parallel=true — CI test job fails on every push",
+        "reporting_agent": "plan-challenger",
+        "triage": "B",
+        "resolution_source": "human-decision",
+        "resolution": "Replaced testcov target with pytest --cov=mcp_cendoj --cov-report=html --cov-report=term-missing (Option B)"
+      },
+      {
+        "id": "I-001",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "consistency",
+        "description": "lint CI job missing fetch-depth: 0 while typecheck and test jobs have it — fragile with hatch-vcs",
+        "reporting_agent": "integration-reviewer",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Added fetch-depth: 0 to lint job checkout step, consistent with other jobs"
+      },
+      {
+        "id": "I-002",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "consistency",
+        "description": "C901 in ignore list neutralises C90/mccabe selection — max-complexity = 14 never fires",
+        "reporting_agent": "integration-reviewer",
+        "triage": "B",
+        "resolution_source": "human-decision",
+        "resolution": "Removed C901 from ignore — mccabe complexity now enforced at max-complexity = 14 (Option A)"
+      },
+      {
+        "id": "P-003",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "consistency",
+        "description": "Q (flake8-quotes) rules in extend-select is a documented ruff anti-pattern when used with the ruff formatter",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Removed Q from extend-select — formatter already enforces quote style"
+      },
+      {
+        "id": "I-004",
+        "layer": 2,
+        "severity": "INFO",
+        "category": "correctness",
+        "description": "No fallback-version in [tool.hatch.version] — tagless environments get 0.0.0+unknown",
+        "reporting_agent": "integration-reviewer",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Added fallback-version = \"0.0.0\" to [tool.hatch.version]"
+      },
+      {
+        "id": "P-004",
+        "layer": 2,
+        "severity": "INFO",
+        "category": "consistency",
+        "description": "FA (flake8-future-annotations) rules are no-ops on Python 3.13+ and cause unnecessary churn",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Removed FA from extend-select — project requires Python >=3.13"
+      },
+      {
+        "id": "P-005",
+        "layer": 2,
+        "severity": "INFO",
+        "category": "completeness",
+        "description": "No fail_under threshold — coverage can silently drop to 0% with no CI signal",
+        "reporting_agent": "plan-challenger",
+        "triage": "B",
+        "resolution_source": "human-decision",
+        "resolution": "Added fail_under = 80 to [tool.coverage.report] (Option A)"
+      },
+      {
+        "id": "S-001",
+        "layer": 1,
+        "severity": "WARNING",
+        "category": "compliance",
+        "description": "No AGENTS.md exists — plan compliance with project hard rules cannot be verified",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Project has no AGENTS.md — validator limitation, not a plan defect. Resolved as N/A."
+      },
+      {
+        "id": "S-002",
+        "layer": 1,
+        "severity": "INFO",
+        "category": "format",
+        "description": "Task format lacks explicit per-task acceptance criteria",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Tasks have sufficient descriptions and completion checkboxes for a tooling-only plan. Resolved as acceptable."
+      },
+      {
+        "id": "S-003",
+        "layer": 1,
+        "severity": "INFO",
+        "category": "test-coverage",
+        "description": "test_main_runs has no behavioral assertion — smoke test only",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "main() only calls print() — smoke test is adequate for current scope."
+      }
+    ]
+  },
+  "execution": {
+    "executed_at": "2026-04-29",
+    "executor": "plan-execute",
+    "tasks": {
+      "total": 8,
+      "by_layer": { "1": 8 },
+      "tdd_count": 0
+    },
+    "diff_stats": {
+      "files_changed": 53,
+      "lines_added": 5558,
+      "lines_removed": 0,
+      "note": "Initial commit — no prior history"
+    },
+    "quality_gate": {
+      "passed": true,
+      "fix_attempts": 0,
+      "results": {
+        "format": "pass",
+        "lint": "pass",
+        "typecheck": "pass (0 errors, 0 warnings)",
+        "tests": "pass (1 passed)",
+        "coverage": "100.00% (threshold: 80%)"
+      }
+    },
+    "smoke_tests": {
+      "ran": false,
+      "note": "No integration services required for pure tooling plan"
+    },
+    "drift_score": 1.0,
+    "merge": {
+      "branch": "main",
+      "note": "Initial commit — no PR/MR needed (no prior base branch)"
+    }
+  }
+}
