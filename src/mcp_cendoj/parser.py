@@ -38,7 +38,7 @@ def _extract_text_from_pdf(pdf_bytes: bytes) -> str:
     return '\n'.join(parts)
 
 
-def _split_sections(text: str) -> tuple[str | None, str | None, str | None, bool]:
+def split_sections(text: str) -> tuple[str | None, str | None, str | None, bool]:
     """Split text into antecedentes / fundamentos_derecho / fallo sections.
 
     Returns a tuple of (antecedentes, fundamentos_derecho, fallo, parse_successful).
@@ -113,7 +113,7 @@ def extract_sections(pdf_bytes: bytes, ecli: str | None = None) -> RulingSection
             tribunal_scope='other',
         )
 
-    antecedentes, fundamentos, fallo, parsed = _split_sections(plain_text)
+    antecedentes, fundamentos, fallo, parsed = split_sections(plain_text)
 
     return RulingSections(
         raw_text=raw_text,
