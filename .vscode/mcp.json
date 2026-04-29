@@ -21,7 +21,7 @@
             "command": "/opt/homebrew/bin/uvx", // or the absolute /path/to/uvx
             "args": ["logfire-mcp@latest"],
             "env": {
-                "LOGFIRE_READ_TOKEN": "REMOVED_LOGFIRE_TOKEN"
+                "LOGFIRE_READ_TOKEN": "${env:LOGFIRE_READ_TOKEN}"
             }
         },
         "context7": {
@@ -54,7 +54,7 @@
         "hf-mcp-server": {
             "url": "https://huggingface.co/mcp",
             "headers": {
-                "Authorization": "Bearer <REMOVED_HF_TOKEN>"
+                "Authorization": "Bearer ${env:HF_TOKEN}"
             }
         }
         // "mcp-atlassian": {
