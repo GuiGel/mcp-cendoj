@@ -25,6 +25,11 @@ import sys, json; d = json.load(sys.stdin); print(d.get('cwd', '.'))
 
 cd "$cwd" 2>/dev/null || exit 0
 
+# Remove .mr-body.md if it exists (artifact from Create MR agent)
+if [[ -f ".mr-body.md" ]]; then
+  rm -f ".mr-body.md"
+fi
+
 # Check for uncommitted changes
 dirty=$(git status --porcelain 2>/dev/null | head -5 || echo "")
 
