@@ -18,6 +18,19 @@
   "adrs_created": 4,
   "layers": 4,
   "tasks_count": 11,
+  "execution_results": {
+    "completed_at": "2026-04-29",
+    "pr_url": "https://github.com/GuiGel/mcp-cendoj/pull/3",
+    "branch": "feature/cendoj-mcp-server",
+    "total_tests": 57,
+    "tests_passed": 57,
+    "tests_failed": 0,
+    "lint": "clean",
+    "typecheck": "0 errors",
+    "source_files_added": ["src/mcp_cendoj/models.py", "src/mcp_cendoj/constants.py", "src/mcp_cendoj/http.py", "src/mcp_cendoj/parser.py", "src/mcp_cendoj/cache.py", "src/mcp_cendoj/tools/lookup.py", "src/mcp_cendoj/tools/search.py", "src/mcp_cendoj/tools/document.py", "src/mcp_cendoj/tools/superseded.py"],
+    "key_discovery": "CENDOJ documents served as PDFs (not HTML) — pdfplumber added as runtime dependency",
+    "key_discovery_2": "X-Requested-With header must NOT be set — causes 403/error response from CENDOJ"
+  },
   "estimated_hours_total": 12,
   "estimated_hours_by_layer": {
     "layer_1_foundation": 2,
