@@ -3,7 +3,7 @@ name: Plan Execute
 description: "Execute a validated plan: worktree isolation, TDD scaffolding, level-based sequential subagents, quality gate with smoke test, PR creation and merge. Handles everything through to merged PR. Use after Plan Validate confirms all issues resolved."
 argument-hint: "Plan name (e.g. user-authentication) — omit to pick up the most recent validated plan"
 tools: [read, search, execute, edit, agent, logfire/*, playwright/*]
-agents: ["Quality Fixer", "Quality Fixer Smoke"]
+agents: ["Quality Fixer", "Quality Fixer Smoke", "Create MR"]
 model: "Claude Sonnet 4.6 (copilot)"
 ---
 
@@ -154,59 +154,36 @@ Commit: `docs: reconcile PRD and archive plan for {feature-name}`.
 
 ## Step 6: Push and MR
 
-Write the MR description to `.mr-body.md` first, then push and create the MR:
+Delegate to the `Create MR` agent. Pass it the following inputs collected during
+this execution:
 
-```markdown
-## Summary
-{plan summary paragraph}
+| Input | Source |
+|---|---|
+| `branch` | `feature/{plan-name}` |
+| `target` | `main` (or as specified in the plan) |
+| `title` | `{feature-name}: {one-line summary from plan}` |
+| `summary` | Plan summary paragraph |
+| `tasks` | Completed task list with files affected |
+| `adrs` | ADRs created during this plan |
+| `test_plan` | Plan's `## Test Plan` section |
+| `ci_results` | Output from `make test` and `make test-integration` |
 
-## Changes
-{bullet per task with files affected}
+The `Create MR` agent will write `.mr-body.md`, push the branch, and open the MR.
 
-## ADRs
-{list of ADRs created during this plan}
+**After PR creation, the GitHub Actions CI pipeline fires automatically** (no manual
+action needed). Wait for all status checks to go green before merging.
 
-## Test Plan
-{from plan test plan section}
-
-## Local Integration Test Results
-{output from make test-integration}
-```
-
-```bash
-git push origin feature/{plan-name}
-glab mr create \
-  --title "{feature-name}: {one-line summary from plan}" \
-  --description "$(cat .mr-body.md)" \
-  --target-branch develop \
-  --squash-before-merge \
-  --remove-source-branch
-```
-
-**After MR creation, the GitLab CI pipeline fires automatically** (no manual action
-needed). It runs in order:
-1. `test:unit` — unit + package tests with coverage
-2. `check-api-contract` — oasdiff breaking-change guard (MRs only)
-3. `deploy-develop-innova` — full deploy to innovapre (auto)
-4. `test:integration` — integration tests against the live deployed stack
-
-Wait for the pipeline to go green before merging. Check with:
+Once CI is green, merge using squash via the GitHub UI or:
 
 ```bash
-glab pipeline list --source merge_request_event
-```
-
-Once the pipeline is green, merge using squash:
-
-```bash
-glab mr merge --squash --remove-source-branch
+gh pr merge --squash --delete-branch
 ```
 
 ---
 
 ## Step 7: Post-Merge Metrics
 
-Switch back to develop/main. Update `docs/plans/metrics/{name}.json` with:
+Switch back to main. Update `docs/plans/metrics/{name}.json` with:
 - Task count and per-layer breakdown
 - TDD task count
 - Diff stats (files changed, lines added/removed)

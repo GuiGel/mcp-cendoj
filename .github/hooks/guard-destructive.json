@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": ".github/hooks/scripts/guard-destructive.sh",
+        "osx": ".github/hooks/scripts/guard-destructive.sh",
+        "linux": ".github/hooks/scripts/guard-destructive.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}

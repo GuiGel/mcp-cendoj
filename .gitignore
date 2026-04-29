@@ -12,3 +12,12 @@ wheels/
 # Coverage
 .coverage
 htmlcov/
+
+# Local env
+.envrc
+
+# Worktrees
+.worktrees/
+
+# playright
+.playwright-mcp/*
