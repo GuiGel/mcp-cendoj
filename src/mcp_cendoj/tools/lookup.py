@@ -26,7 +26,7 @@ class ECLIAmbiguousError(Exception):
     """Raised when the ECLI search returns more than one result."""
 
 
-def _validate_ecli(ecli: str) -> None:
+def validate_ecli(ecli: str) -> None:
     """Validate ECLI format strictly.
 
     Args:
@@ -37,6 +37,10 @@ def _validate_ecli(ecli: str) -> None:
     """
     if not re.fullmatch(r'ECLI:[A-Z]{2}:[A-Z0-9_-]+:[0-9]{4}:[A-Z0-9._-]+', ecli):
         raise ValueError(f'Invalid ECLI: {ecli!r}')
+
+
+# Backward-compatible alias for internal use
+_validate_ecli = validate_ecli
 
 
 def _parse_search_results(html: str) -> list[dict[str, str | None]]:
