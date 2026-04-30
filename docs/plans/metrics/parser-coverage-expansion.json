@@ -1,0 +1,150 @@
+{
+  "plan": "parser-coverage-expansion",
+  "created_at": "2026-04-30T00:00:00Z",
+  "tier": 1,
+  "agents": ["Code Explorer", "Test Analyzer"],
+  "phases": {
+    "phase_1_prd": { "skipped": true, "reason": "no PRD; analysis doc used as input" },
+    "phase_2_technical": { "agents_spawned": 2, "reports_collected": 2 },
+    "phase_3_scope": { "tier": "Tier 1 — Focused", "agents_approved": 2 },
+    "phase_4_plan": { "adrs_created": 1, "plan_file": "docs/plans/plan-parser-coverage-expansion.md" },
+    "phase_5_metrics": { "recorded_at": "2026-04-30T00:00:00Z" }
+  },
+  "adr": "docs/adr/ADR-0006-extended-parser-scope-and-auto-format.md",
+  "tasks": {
+    "total": 14,
+    "layers": {
+      "layer_1_models": 2,
+      "layer_2_parser": 3,
+      "layer_3_fixtures": 3,
+      "layer_4_tests": 5,
+      "layer_5_regression": 1
+    }
+  },
+  "new_tests": {
+    "unit": 30,
+    "integration": 3
+  },
+  "estimated_coverage_before": "~15-20%",
+  "estimated_coverage_after": "~75-80%",
+  "validation": {
+    "validated_at": "2026-04-30T00:00:00Z",
+    "validator": "plan-validate",
+    "specialists_invoked": ["plan-challenger"],
+    "issues": [
+      {
+        "id": "S-001",
+        "layer": 1,
+        "severity": "WARNING",
+        "category": "format",
+        "description": "Missing standalone ## Decisions section; decisions embedded in Architecture",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "auto-fix",
+        "resolution": "Added ## Decisions section with decision table and ADR-0006 acceptance note"
+      },
+      {
+        "id": "S-002",
+        "layer": 1,
+        "severity": "WARNING",
+        "category": "tdd",
+        "description": "Layer ordering places implementation (Layer 2) before unit tests (Layer 4); TDD not enforced at macro level",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "auto-fix",
+        "resolution": "Added TDD ordering note in Test Plan clarifying that Tasks 4.1-4.3 should be written before Layer 2 implementation tasks"
+      },
+      {
+        "id": "S-003",
+        "layer": 1,
+        "severity": "WARNING",
+        "category": "task-clarity",
+        "description": "Task 4.5 ambiguous about whether new tests replace test_get_ruling_text_resource xfail",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "auto-fix",
+        "resolution": "Reworded Task 4.5 to state tests are new tool-level tests and do NOT fix/remove the xfail"
+      },
+      {
+        "id": "S-004",
+        "layer": 1,
+        "severity": "INFO",
+        "category": "adr-status",
+        "description": "ADR-0006 still marked Proposed; must be Accepted before execution",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "auto-fix",
+        "resolution": "Added note in Decisions section requiring ADR-0006 be marked Accepted at execution start"
+      },
+      {
+        "id": "S-005",
+        "layer": 1,
+        "severity": "INFO",
+        "category": "metrics",
+        "description": "metrics JSON reported total=11 tasks but plan has 14",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "auto-fix",
+        "resolution": "Updated metrics JSON total from 11 to 14"
+      },
+      {
+        "id": "C-001",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "implementation-gap",
+        "description": "Task 2.3 did not show extract_sections return logic using tribunal_scope=scope; executor could hardcode 'other'/'ts_tc' instead",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "auto-fix",
+        "resolution": "Added explicit return code block to Task 2.3 showing tribunal_scope=scope assignment"
+      },
+      {
+        "id": "C-002",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "regex-robustness",
+        "description": "_HEADER_RE with re.DOTALL could match Tipo de Resolución: in document body if optional fields absent",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "adr",
+        "resolution": "Accepted per ADR-0006 consequences clause: atypical documents return parse_successful=False; well-formed PDFs safe"
+      },
+      {
+        "id": "C-003",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "test-fixture-gap",
+        "description": "Task 4.5 integration tests for TSJ/AN required an ECLI lookup HTML fixture not specified in Layer 3",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "auto-fix",
+        "resolution": "Added Mock HTTP setup note to Task 4.5 documenting reuse of ecli_lookup.html and _make_minimal_pdf() inline pattern"
+      },
+      {
+        "id": "C-004",
+        "layer": 2,
+        "severity": "INFO",
+        "category": "edge-case",
+        "description": "No test for Auto quoting a full Sentencia (priority ordering edge case)",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Edge case; low real-world probability. ADR-0006 documents Sentencia-first priority intent. Deferred to follow-up."
+      },
+      {
+        "id": "C-005",
+        "layer": 2,
+        "severity": "INFO",
+        "category": "documentation",
+        "description": "Smoke check only prints tipo_resolucion; could verify more Parser 0 fields",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Smoke check is for manual verification only; unit tests cover all fields. No change needed."
+      }
+    ],
+    "blockers_resolved": 1,
+    "warnings_resolved": 4,
+    "all_bucket_a": true
+  }
+}
