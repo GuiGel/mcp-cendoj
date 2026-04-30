@@ -33,7 +33,7 @@ test:
 
 .PHONY: testcov  # Run tests and generate an HTML coverage report
 testcov:
-	uv run pytest --cov=mcp_cendoj --cov-report=html --cov-report=term-missing
+	uv run pytest --cov-report=html
 
 .PHONY: all  # Run format, lint, typecheck, and test
 all: format lint typecheck test
