@@ -7,11 +7,7 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 import respx
-from mcp.client.session import ClientSession
-from mcp.shared.memory import create_connected_server_and_client_session
 
-import mcp_cendoj
-from mcp_cendoj import app
 from mcp_cendoj.cache import DiskCache
 from mcp_cendoj.constants import CENDOJ_SEARCH_URL, CENDOJ_SESSION_INIT_URL
 from mcp_cendoj.http import CendojClient
@@ -74,17 +70,3 @@ async def make_cendoj_client() -> AsyncGenerator[Callable[..., CendojClient]]:
 def disk_cache(tmp_path: Path) -> DiskCache:
     """Return an isolated DiskCache backed by a temporary directory."""
     return DiskCache(db_path=str(tmp_path / 'cache.db'))
-
-
-@pytest.fixture
-async def mcp_session(monkeypatch: pytest.MonkeyPatch) -> AsyncGenerator[ClientSession]:
-    """Yield an in-process MCP ClientSession connected to the mcp-cendoj server.
-
-    Safety: sets `mcp_cendoj._client` to a sentinel object that raises AttributeError
-    on any attribute access. Tests MUST override it with a real CendojClient via
-    monkeypatch BEFORE calling `call_tool` — otherwise the sentinel causes an immediate
-    loud failure instead of a silent real-network call to CENDOJ.
-    """
-    monkeypatch.setattr(mcp_cendoj, '_client', object())  # fail-loud sentinel
-    async with create_connected_server_and_client_session(app) as session:
-        yield session
