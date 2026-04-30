@@ -12,6 +12,7 @@ from mcp_cendoj.constants import (
 )
 from mcp_cendoj.http import CendojClient
 from mcp_cendoj.models import Ruling, RulingSections
+from mcp_cendoj.parser import _detect_scope  # pyright: ignore[reportPrivateUsage]
 
 _ECLI_RE = re.compile(r'ECLI:[A-Z]{2}:[A-Z0-9_-]+:[0-9]{4}:[A-Z0-9._-]+')
 """Regex for extracting ECLI identifiers from raw text.
@@ -158,7 +159,7 @@ async def lookup_by_ecli(ecli: str, client: CendojClient | None = None) -> Rulin
     sections = RulingSections(
         raw_text=item['snippet'] or '',
         parse_successful=False,
-        tribunal_scope='other',
+        tribunal_scope=_detect_scope(ecli),
     )
     cendoj_uri = f'cendoj://{ecli}'
     return Ruling(

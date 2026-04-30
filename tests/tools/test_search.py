@@ -54,11 +54,12 @@ async def test_successful_search_returns_results(make_cendoj_client: Callable[..
     assert results[1].ecli == 'ECLI:ES:TS:2020:67890'
 
 
-async def test_empty_results_raises_network_error(make_cendoj_client: Callable[..., CendojClient]) -> None:
+async def test_empty_results_returns_empty_list(make_cendoj_client: Callable[..., CendojClient]) -> None:
     client = make_cendoj_client(_ZERO_RESULT_HTML)
 
-    with pytest.raises(CendojNetworkError, match='No results'):
-        await search_rulings('no match query', client=client)
+    results = await search_rulings('no match query', client=client)
+
+    assert results == []
 
 
 async def test_max_results_clamped_to_cap() -> None:
@@ -113,7 +114,7 @@ async def test_filter_params_sent_in_form_body() -> None:
     await search_rulings(
         'despido',
         jurisdiccion='SOCIAL',
-        tipo_resolucion='SENTENCIA',
+        tipo_resolucion='SENTENCIA CASACION',
         tipo_organo='14',
         idioma='1',
         fecha_desde='01/01/2020',
@@ -124,7 +125,7 @@ async def test_filter_params_sent_in_form_body() -> None:
     await client.close()
 
     assert captured['JURISDICCION'] == 'SOCIAL'
-    assert captured['SUBTIPORESOLUCION'] == 'SENTENCIA'
+    assert captured['SUBTIPORESOLUCION'] == 'SENTENCIA CASACION'
     assert captured['TIPOORGANOPUB'] == '14'
     assert captured['IDIOMA'] == '1'
     assert captured['FECHARESOLUCIONDESDE'] == '01/01/2020'

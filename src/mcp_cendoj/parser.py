@@ -29,14 +29,14 @@ hyphenation and line-break artefacts introduced by pdfplumber text extraction.
 _AUTO_SECTION_RE = re.compile(
     r'(HECHOS|ANTECEDENTES)'
     r'|(RAZONAMIENTOS\s+JUR[IÍ]DICOS|RAZONAMIENTOS|FUNDAMENTOS\s+JUR[IÍ]DICOS)'
-    r'|(LA\s+SALA\s+ACUERDA\s*:|ACUERDA\s*:|SE\s+ACUERDA\s*:)',
+    r'|(LA\s+SALA\s+ACUERDA\s*:|ACUERDA\s*:|SE\s+ACUERDA\s*:|PARTE\s+DISPOSITIVA)',
     re.IGNORECASE,
 )
 """Regex for the Auto/Providencia heading schema used by collegial courts.
 
 Group 1: antecedentes equivalent (HECHOS or ANTECEDENTES).
 Group 2: fundamentos equivalent (RAZONAMIENTOS JURÍDICOS / RAZONAMIENTOS / FUNDAMENTOS JURÍDICOS).
-Group 3: fallo equivalent (LA SALA ACUERDA: / ACUERDA: / SE ACUERDA:).
+Group 3: fallo equivalent (LA SALA ACUERDA: / ACUERDA: / SE ACUERDA: / PARTE DISPOSITIVA).
 """
 
 _TS_TC_ECLI_RE = re.compile(r'^ECLI:ES:(TS|TC):', re.IGNORECASE)
@@ -215,12 +215,22 @@ def _try_split_with_re(
     if len(label_to_content_start) < 3:
         return None, None, None, False
 
+    ant_heading = label_to_heading_start['ANTECEDENTES']
+    fun_heading = label_to_heading_start['FUNDAMENTOS']
+    fal_heading = label_to_heading_start['FALLO']
+
+    # Reject splits where headings appear out of order in the text.
+    # This guards against false-positive matches such as "Fallo/Acuerdo:" in
+    # the CENDOJ cover-page metadata block, which precedes ANTECEDENTES DE HECHO.
+    if not (ant_heading < fun_heading < fal_heading):
+        return None, None, None, False
+
     ant_start = label_to_content_start['ANTECEDENTES']
     fun_start = label_to_content_start['FUNDAMENTOS']
     fal_start = label_to_content_start['FALLO']
 
-    antecedentes = text[ant_start : label_to_heading_start.get('FUNDAMENTOS', fun_start)].strip()
-    fundamentos = text[fun_start : label_to_heading_start.get('FALLO', fal_start)].strip()
+    antecedentes = text[ant_start:fun_heading].strip()
+    fundamentos = text[fun_start:fal_heading].strip()
     fallo = text[fal_start:].strip()
 
     return antecedentes or None, fundamentos or None, fallo or None, True

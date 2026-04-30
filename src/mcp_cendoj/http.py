@@ -131,6 +131,10 @@ class CendojClient:
                         raise CendojNetworkError(
                             'CENDOJ returned 403 — IP temporarily blocked by WAF. Wait 15–60 minutes before retrying.'
                         )
+                    if resp.status_code == 500:
+                        raise CendojNetworkError(
+                            'CENDOJ returned 500 — the requested resource may not exist or the query is invalid.'
+                        )
                     if resp.status_code in (429, 503):
                         backoff = (2**attempt) + random.uniform(0, 1)  # S311 safe: jitter only
                         await asyncio.sleep(backoff)
@@ -186,6 +190,10 @@ class CendojClient:
                     if resp.status_code == 403:
                         raise CendojNetworkError(
                             'CENDOJ returned 403 — IP temporarily blocked by WAF. Wait 15–60 minutes before retrying.'
+                        )
+                    if resp.status_code == 500:
+                        raise CendojNetworkError(
+                            'CENDOJ returned 500 — the requested resource may not exist or the query is invalid.'
                         )
                     if resp.status_code in (429, 503):
                         backoff = (2**attempt) + random.uniform(0, 1)  # S311 safe: jitter only
