@@ -375,7 +375,7 @@ async def search_rulings(
         List of SearchResult objects, ordered by ruling date descending.
 
     Raises:
-        CendojNetworkError: On HTTP failures or empty result sets.
+        CendojNetworkError: On HTTP failures.
     """
     max_results = min(max_results, MAX_RESULTS_CAP)
     # CENDOJ only accepts recordsPerPage ∈ {1, 10, 20, 50}.
