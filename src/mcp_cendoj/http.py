@@ -28,8 +28,13 @@ class CendojClient:
     process boundaries. Do not use this client for high-concurrency workloads.
     """
 
-    def __init__(self) -> None:
-        """Initialise the client with a persistent async httpx session."""
+    def __init__(self, *, transport: httpx.AsyncBaseTransport | None = None) -> None:
+        """Initialise the client with a persistent async httpx session.
+
+        Args:
+            transport: Optional custom transport for testing (e.g. httpx.MockTransport).
+                       When None, httpx uses its default network transport.
+        """
         timeout = httpx.Timeout(
             connect=CONNECT_TIMEOUT_S,
             read=READ_TIMEOUT_S,
@@ -40,6 +45,7 @@ class CendojClient:
             headers=DEFAULT_HEADERS,
             timeout=timeout,
             follow_redirects=True,
+            transport=transport,
         )
         self._semaphore = asyncio.Semaphore(RATE_LIMIT_RPS)
         self._session_initialised = False
