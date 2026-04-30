@@ -23,6 +23,10 @@ class CendojNetworkError(Exception):
 class CendojClient:
     """Async HTTP client for CENDOJ with rate limiting and session management.
 
+    Manages the JSESSIONID session cookie automatically: the first call to
+    :meth:`post` or :meth:`get` triggers a GET to CENDOJ_SESSION_INIT_URL,
+    which causes the server to set the HttpOnly cookie.
+
     Rate limiting is per-process: concurrent Claude Desktop sessions (multiple
     processes) each have their own semaphore and are not serialised across
     process boundaries. Do not use this client for high-concurrency workloads.
@@ -51,7 +55,13 @@ class CendojClient:
         self._session_initialised = False
 
     async def _ensure_session(self) -> None:
-        """GET the CENDOJ search page to acquire a session cookie (JSESSIONID)."""
+        """GET the CENDOJ search page to acquire a JSESSIONID session cookie.
+
+        The server sets an HttpOnly cookie that must be present on every
+        subsequent POST. httpx stores and resends it automatically via its
+        internal cookie jar. This method is idempotent: it only fires the
+        initial GET once per client instance.
+        """
         if not self._session_initialised:
             await self._client.get(CENDOJ_SESSION_INIT_URL)
             self._session_initialised = True
@@ -73,13 +83,19 @@ class CendojClient:
         return await self._request_with_retry('POST', url, data=data)
 
     async def get(self, url: str) -> tuple[str, str]:
-        """GET a URL with rate limiting and retry.
+        """GET a URL with rate limiting and retry, returning the body as text.
+
+        Note:
+            The returned content_type string is always ``''``. Use
+            :meth:`get_with_content_type` when the MIME type matters
+            (e.g. to detect PDF responses).
 
         Args:
             url: The endpoint URL.
 
         Returns:
-            Tuple of (response_body, content_type).
+            Tuple of ``(response_body_text, content_type)`` where
+            ``content_type`` is always an empty string.
 
         Raises:
             CendojNetworkError: On HTTP errors, timeouts, or oversized responses.
@@ -89,13 +105,18 @@ class CendojClient:
         return body, ''
 
     async def get_with_content_type(self, url: str) -> tuple[bytes, str]:
-        """GET a URL and return raw bytes with content type.
+        """GET a URL and return the raw response bytes together with its MIME type.
+
+        Use this method — rather than :meth:`get` — when the caller needs to
+        distinguish between PDF and HTML responses (e.g. the document endpoint).
 
         Args:
             url: The endpoint URL.
 
         Returns:
-            Tuple of (raw_response_bytes, content_type).
+            Tuple of ``(raw_bytes, content_type)`` where ``content_type`` is the
+            value of the ``Content-Type`` response header (e.g.
+            ``'application/pdf'``), or an empty string if the header is absent.
 
         Raises:
             CendojNetworkError: On HTTP errors, timeouts, or oversized responses.
@@ -106,6 +127,10 @@ class CendojClient:
             for attempt in range(3):
                 try:
                     resp = await self._client.get(url)
+                    if resp.status_code == 403:
+                        raise CendojNetworkError(
+                            'CENDOJ returned 403 — IP temporarily blocked by WAF. Wait 15–60 minutes before retrying.'
+                        )
                     if resp.status_code in (429, 503):
                         backoff = (2**attempt) + random.uniform(0, 1)  # S311 safe: jitter only
                         await asyncio.sleep(backoff)
@@ -158,6 +183,10 @@ class CendojClient:
                     else:
                         resp = await self._client.get(url)
 
+                    if resp.status_code == 403:
+                        raise CendojNetworkError(
+                            'CENDOJ returned 403 — IP temporarily blocked by WAF. Wait 15–60 minutes before retrying.'
+                        )
                     if resp.status_code in (429, 503):
                         backoff = (2**attempt) + random.uniform(0, 1)  # S311 safe: jitter only
                         await asyncio.sleep(backoff)

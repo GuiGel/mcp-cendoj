@@ -11,13 +11,30 @@ from mcp_cendoj.parser import extract_sections
 from mcp_cendoj.tools.lookup import lookup_by_ecli, validate_ecli
 
 _DOCUMENT_FETCH_TIMEOUT_S = 20.0
+"""Per-request HTTP read timeout for PDF document downloads, in seconds.
+
+The document endpoint may return large PDF files (up to 1–2 MB). This is set
+higher than READ_TIMEOUT_S to prevent premature timeouts on slow CENDOJ responses.
+"""
+
 _CACHE_TTL_SECONDS = 86_400  # 24 hours
+"""Time-to-live for cached ruling documents, in seconds (24 hours).
+
+After this period the cached entry expires and the document is re-fetched on
+the next request. A 24-hour window balances freshness against the risk of
+triggering CENDOJ WAF rate limits.
+"""
 
 _disk_cache: DiskCache | None = None
 
 
 def _get_cache() -> DiskCache:
-    """Return the module-level :class:`~mcp_cendoj.cache.DiskCache` instance."""
+    """Return the module-level :class:`~mcp_cendoj.cache.DiskCache` singleton.
+
+    The cache is created on first call and reused across all subsequent calls
+    within the same process. This is a deliberate global to avoid the overhead
+    of reopening the SQLite database on every request.
+    """
     global _disk_cache
     if _disk_cache is None:
         _disk_cache = DiskCache()

@@ -112,6 +112,8 @@ gh pr create \
   --head {branch}
 ```
 
+Capture the PR number from the output (printed by `gh` as e.g. `https://github.com/org/repo/pull/42`).
+
 ---
 
 ## Step 4: Confirm and Report
@@ -119,6 +121,7 @@ gh pr create \
 After the PR is created, return to the caller:
 
 - PR URL (as a markdown link)
+- **PR number** (integer — required by the caller to patch metrics after merge)
 - Branch pushed: `{branch}` → `{target}`
 - Path to `.mr-body.md` in the worktree (for audit)
 

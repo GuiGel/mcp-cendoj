@@ -1,7 +1,7 @@
 ---
 name: Brainstorm
 description: "Orchestrates multi-perspective brainstorming. Use when: brainstorming ideas, exploring solutions, parallel perspectives, creative ideation, generating diverse solutions, avoiding local optima, parallel thinking, problem exploration, idea generation"
-tools: ['agent', 'read', 'search']
+tools: ['agent', 'read', 'search', 'web', 'context7/*']
 agents: ['bs-critic', 'bs-optimist', 'bs-realist']
 argument-hint: "Describe the problem or topic to brainstorm..."
 handoffs:
