@@ -12,8 +12,26 @@ _SECTION_RE = re.compile(
     r'(ANTECEDENTES\s+DE\s+HECHO|FUNDAMENTOS\s+DE\s+DERECHO|FALLO|PARTE\s+DISPOSITIVA)',
     re.IGNORECASE,
 )
+"""Regex that matches the canonical section headings in Spanish court ruling PDFs.
+
+Captures four heading variants:
+    ANTECEDENTES DE HECHO: Background facts section heading (TS/TC rulings).
+    FUNDAMENTOS DE DERECHO: Legal reasoning section heading (TS/TC rulings).
+    FALLO: Operative part heading (most TS/TC rulings).
+    PARTE DISPOSITIVA: Alternative operative part heading (some TS rulings).
+
+The match is case-insensitive and allows any whitespace between words to handle
+hyphenation and line-break artefacts introduced by pdfplumber text extraction.
+"""
 
 _TS_TC_ECLI_RE = re.compile(r'^ECLI:ES:(TS|TC):', re.IGNORECASE)
+"""Regex to identify Tribunal Supremo and Tribunal Constitucional ECLI identifiers.
+
+Matches ECLIs of the form ``ECLI:ES:TS:…`` or ``ECLI:ES:TC:…``.
+Used by :func:`_detect_scope` to decide whether to attempt section splitting.
+All other courts (e.g. TSJM, AN, JPI) do not reliably follow the 3-section
+structure, so their PDFs are returned as raw text only.
+"""
 
 
 class CendojParseError(Exception):
@@ -28,7 +46,15 @@ def _detect_scope(ecli: str | None) -> str:
 
 
 def _extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    """Extract plain text from PDF bytes using pdfplumber."""
+    """Extract concatenated plain text from all pages of a PDF.
+
+    Args:
+        pdf_bytes: Raw PDF file content as returned by the CENDOJ document endpoint.
+
+    Returns:
+        Newline-joined text from all pages. Returns an empty string if pdfplumber
+        extracts no text (e.g. scanned PDFs without an embedded text layer).
+    """
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
         parts: list[str] = []
         for page in pdf.pages:
@@ -39,10 +65,20 @@ def _extract_text_from_pdf(pdf_bytes: bytes) -> str:
 
 
 def split_sections(text: str) -> tuple[str | None, str | None, str | None, bool]:
-    """Split text into antecedentes / fundamentos_derecho / fallo sections.
+    """Split ruling text into antecedentes, fundamentos_derecho, fallo sections.
 
-    Returns a tuple of (antecedentes, fundamentos_derecho, fallo, parse_successful).
-    parse_successful is True only when all three sections are found.
+    Locates the canonical section headings (matched by _SECTION_RE) and slices
+    the text into three segments. If fewer than three headings are found, returns
+    all ``None`` values with ``parse_successful=False``.
+
+    Args:
+        text: Plain text of the ruling extracted from the PDF.
+
+    Returns:
+        Tuple of ``(antecedentes, fundamentos_derecho, fallo, parse_successful)``
+        where the first three elements are the extracted section strings (stripped),
+        or ``None`` if parsing failed. ``parse_successful`` is ``True`` only when
+        all three sections are found.
     """
     matches = list(_SECTION_RE.finditer(text))
     if not matches:

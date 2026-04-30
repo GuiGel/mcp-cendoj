@@ -7,15 +7,28 @@ from bs4 import BeautifulSoup
 
 from mcp_cendoj.constants import (
     CENDOJ_DOCUMENT_URL_TEMPLATE,
+    CENDOJ_FORM_BASE,
     CENDOJ_SEARCH_URL,
-    SEARCH_ACTION_QUERY,
-    SEARCH_DATABASE_ALL,
-    SEARCH_SORT_DEFAULT,
 )
 from mcp_cendoj.http import CendojClient
 from mcp_cendoj.models import Ruling, RulingSections
 
 _ECLI_RE = re.compile(r'ECLI:[A-Z]{2}:[A-Z0-9_-]+:[0-9]{4}:[A-Z0-9._-]+')
+"""Regex for extracting ECLI identifiers from raw text.
+
+Pattern breakdown:
+    ECLI:           literal prefix
+    [A-Z]{2}        2-letter ISO country code (e.g. 'ES')
+    :               separator
+    [A-Z0-9_-]+     court code  (e.g. 'TS', 'TSJ', 'AN', 'TC', 'TSJPV')
+    :               separator
+    [0-9]{4}        4-digit year
+    :               separator
+    [A-Z0-9._-]+    alphanumeric locator (may include dots, underscores, hyphens)
+
+Used both for extraction from raw text and as a strict full-match validator
+in :func:`validate_ecli`.
+"""
 
 
 class ECLINotFoundError(Exception):
@@ -125,11 +138,8 @@ async def lookup_by_ecli(ecli: str, client: CendojClient | None = None) -> Rulin
         html = await client.post(
             CENDOJ_SEARCH_URL,
             data={
-                'action': SEARCH_ACTION_QUERY,
-                'sort': SEARCH_SORT_DEFAULT,
-                'recordsPerPage': '10',
-                'databasematch': SEARCH_DATABASE_ALL,
-                'start': '1',
+                **CENDOJ_FORM_BASE,
+                'recordsPerPage': '10',  # 10 is a valid CENDOJ page size; 1 result expected
                 'ECLI': ecli,
             },
         )
