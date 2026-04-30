@@ -6,11 +6,30 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class DocumentMetadata(BaseModel):
+    """Structured metadata extracted from the CENDOJ PDF header block."""
+
+    roj: str | None = None
+    ecli_from_pdf: str | None = None
+    id_cendoj: str | None = None
+    organo: str | None = None
+    sede: str | None = None
+    fecha_raw: str | None = None
+    ponente: str | None = None
+    tipo_resolucion: str | None = None
+    nro_recurso: str | None = None
+    nro_resolucion: str | None = None
+    seccion: str | None = None
+
+
 class RulingSections(BaseModel):
     """Extracted text sections of a court ruling document.
 
     For Tribunal Supremo (TS) and Tribunal Constitucional (TC) rulings
-    (``tribunal_scope='ts_tc'``), the PDF is split into three named sections.
+    (``tribunal_scope='ts_tc'``), or for collegial courts (Audiencia Nacional,
+    Tribunales Superiores de Justicia, Audiencias Provinciales,
+    ``tribunal_scope='collegial'``), the PDF is split into three named sections
+    when the appropriate headings are detected.
     For all other courts, only ``raw_text`` is populated and ``parse_successful``
     is ``False``.
     """
@@ -18,21 +37,20 @@ class RulingSections(BaseModel):
     antecedentes: str | None = Field(
         default=None,
         description=(
-            'Background facts section ("Antecedentes de hecho"). '
-            'Present only when parse_successful is True (TS/TC rulings).'
+            'Background facts section ("Antecedentes de hecho" / "Hechos"). Present only when parse_successful is True.'
         ),
     )
     fundamentos_derecho: str | None = Field(
         default=None,
         description=(
-            'Legal reasoning section ("Fundamentos de derecho"). '
-            'Present only when parse_successful is True (TS/TC rulings).'
+            'Legal reasoning section ("Fundamentos de derecho" / "Razonamientos jurídicos"). '
+            'Present only when parse_successful is True.'
         ),
     )
     fallo: str | None = Field(
         default=None,
         description=(
-            'Operative part / dispositif ("Fallo"). Present only when parse_successful is True (TS/TC rulings).'
+            'Operative part / dispositif ("Fallo" / "La Sala Acuerda"). Present only when parse_successful is True.'
         ),
     )
     raw_text: str = Field(
@@ -45,16 +63,22 @@ class RulingSections(BaseModel):
         default=False,
         description=(
             'True when the three-section (antecedentes / fundamentos / fallo) '
-            'split succeeded. Only possible for TS/TC rulings (tribunal_scope="ts_tc"). '
-            'False for all other courts or when the PDF format is unexpected.'
+            'split succeeded. Possible for ts_tc and collegial scopes. '
+            'False for other courts or when the PDF format is unexpected.'
         ),
     )
-    tribunal_scope: Literal['ts_tc', 'other'] = Field(
+    tribunal_scope: Literal['ts_tc', 'collegial', 'other'] = Field(
         default='other',
         description=(
-            '"ts_tc" for Tribunal Supremo and Tribunal Constitucional rulings '
-            '(where section splitting is attempted); "other" for all remaining courts.'
+            '"ts_tc" for Tribunal Supremo and Tribunal Constitucional rulings; '
+            '"collegial" for Audiencia Nacional, Tribunales Superiores de Justicia, '
+            'and Audiencias Provinciales (section splitting attempted); '
+            '"other" for Juzgados and all remaining courts (raw text only).'
         ),
+    )
+    metadata: DocumentMetadata | None = Field(
+        default=None,
+        description='Structured metadata from the CENDOJ PDF header block, when detected.',
     )
 
 
