@@ -17,6 +17,7 @@ NOTE on mcp_session pattern:
     (same task), NOT in a fixture.
 """
 
+import io
 import json
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
@@ -289,3 +290,114 @@ async def test_get_ruling_text_resource(
     assert len(result.contents) > 0
     text = result.contents[0].text  # type: ignore[union-attr]
     assert text is not None
+
+
+# ---------------------------------------------------------------------------
+# parser scope integration tests
+# ---------------------------------------------------------------------------
+
+
+def _make_minimal_pdf_inline(text: str) -> bytes:
+    """Build a minimal PDF from text — reportlab if available, else empty PDF stub."""
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfgen import canvas
+
+        buf = io.BytesIO()
+        c = canvas.Canvas(buf, pagesize=A4)
+        y = 800
+        for line in text.splitlines():
+            c.drawString(40, y, line)
+            y -= 15
+            if y < 50:
+                c.showPage()
+                y = 800
+        c.save()
+        return buf.getvalue()
+    except ImportError:
+        return (
+            b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj '
+            b'2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj '
+            b'3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R>>endobj '
+            b'xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n'
+            b'0000000058 00000 n \n0000000115 00000 n \n'
+            b'trailer<</Size 4/Root 1 0 R>>\nstartxref\n190\n%%EOF\n'
+        )
+
+
+async def test_get_ruling_text_ts_auto_parses_hechos(
+    make_cendoj_client: Callable[..., CendojClient],
+    disk_cache: DiskCache,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pdf_bytes = (FIXTURES / 'ts_ruling.pdf').read_bytes()
+    client = make_cendoj_client(
+        (FIXTURES / 'ecli_lookup.html').read_text(),
+        document_url=_ECLI_LOOKUP_DOC_URL,
+        document_bytes=pdf_bytes,
+    )
+    async with _mcp_session(monkeypatch) as session:
+        monkeypatch.setattr(mcp_cendoj, '_client', client)
+        monkeypatch.setattr('mcp_cendoj.tools.document._disk_cache', disk_cache)
+
+        result = await session.call_tool('get_ruling_text', {'ecli': 'ECLI:ES:TS:2026:3898A'})
+
+    assert not result.isError
+    data = json.loads(result.content[0].text)  # type: ignore[union-attr]
+    sections = data['sections']
+    assert sections['parse_successful'] is True
+    assert sections['tribunal_scope'] == 'ts_tc'
+    assert sections['antecedentes'] is not None
+    assert len(sections['antecedentes']) > 0
+
+
+async def test_get_ruling_text_tsj_sentencia_parses_sections(
+    make_cendoj_client: Callable[..., CendojClient],
+    disk_cache: DiskCache,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tsj_text = (FIXTURES / 'tsj_sentence.txt').read_text(encoding='utf-8')
+    pdf_bytes = _make_minimal_pdf_inline(tsj_text)
+    client = make_cendoj_client(
+        (FIXTURES / 'ecli_lookup.html').read_text(),
+        document_url=_ECLI_LOOKUP_DOC_URL,
+        document_bytes=pdf_bytes,
+    )
+    async with _mcp_session(monkeypatch) as session:
+        monkeypatch.setattr(mcp_cendoj, '_client', client)
+        monkeypatch.setattr('mcp_cendoj.tools.document._disk_cache', disk_cache)
+
+        result = await session.call_tool('get_ruling_text', {'ecli': 'ECLI:ES:TSJM:2024:9999'})
+
+    assert not result.isError
+    data = json.loads(result.content[0].text)  # type: ignore[union-attr]
+    sections = data['sections']
+    assert sections['tribunal_scope'] == 'collegial'
+    if sections['parse_successful']:
+        assert sections['antecedentes'] is not None
+
+
+async def test_get_ruling_text_metadata_populated(
+    make_cendoj_client: Callable[..., CendojClient],
+    disk_cache: DiskCache,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pdf_bytes = (FIXTURES / 'ts_ruling.pdf').read_bytes()
+    client = make_cendoj_client(
+        (FIXTURES / 'ecli_lookup.html').read_text(),
+        document_url=_ECLI_LOOKUP_DOC_URL,
+        document_bytes=pdf_bytes,
+    )
+    async with _mcp_session(monkeypatch) as session:
+        monkeypatch.setattr(mcp_cendoj, '_client', client)
+        monkeypatch.setattr('mcp_cendoj.tools.document._disk_cache', disk_cache)
+
+        result = await session.call_tool('get_ruling_text', {'ecli': 'ECLI:ES:TS:2026:3898A'})
+
+    assert not result.isError
+    data = json.loads(result.content[0].text)  # type: ignore[union-attr]
+    sections = data['sections']
+    assert sections['metadata'] is not None
+    assert sections['metadata']['tipo_resolucion'] == 'Auto'
+    ponente = sections['metadata']['ponente'] or ''
+    assert 'CORDOBA' in ponente.upper() or 'Córdoba' in ponente

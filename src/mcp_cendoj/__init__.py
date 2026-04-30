@@ -167,9 +167,25 @@ async def check_if_superseded(ecli: str) -> SupersededResult:
     return await _superseded_impl(ecli, client=_client)
 
 
-@app.resource('cendoj://{ecli}')
+@app.tool()
 async def get_ruling_text(ecli: str) -> Ruling:
     """Fetch and cache the full text of a court ruling by ECLI.
+
+    Downloads the ruling PDF from CENDOJ, extracts section text, and caches
+    the result for 24 hours.
+
+    Args:
+        ecli: The ECLI string identifying the ruling.
+
+    Returns:
+        A Ruling with full PDF text extracted into RulingSections.
+    """
+    return await _document_impl(ecli, client=_client, cache=_disk_cache)
+
+
+@app.resource('cendoj://{ecli}')
+async def get_ruling_text_resource(ecli: str) -> Ruling:
+    """Fetch and cache the full text of a court ruling by ECLI (resource endpoint).
 
     Downloads the ruling PDF from CENDOJ, extracts section text, and caches
     the result for 24 hours.

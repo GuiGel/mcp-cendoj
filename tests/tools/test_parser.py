@@ -6,7 +6,13 @@ from pathlib import Path
 import pytest
 
 from mcp_cendoj.constants import MAX_RESPONSE_BYTES
-from mcp_cendoj.parser import CendojParseError, extract_sections, split_sections
+from mcp_cendoj.parser import (
+    CendojParseError,
+    _detect_scope,  # pyright: ignore[reportPrivateUsage]
+    extract_header_metadata,
+    extract_sections,
+    split_sections,
+)
 
 FIXTURES = Path(__file__).parent.parent / 'fixtures'
 
@@ -80,13 +86,13 @@ class TestExtractSectionsWithSyntheticText:
         )
         assert result.tribunal_scope == 'ts_tc'
 
-    def test_tsj_ecli_sets_other_scope(self) -> None:
+    def test_tsj_ecli_sets_collegial_scope(self) -> None:
         txt = (FIXTURES / 'tsj_ruling.txt').read_text(encoding='utf-8')
         result = extract_sections(
             _make_minimal_pdf(txt),
             ecli='ECLI:ES:TSJM:2020:1234',
         )
-        assert result.tribunal_scope == 'other'
+        assert result.tribunal_scope == 'collegial'
         assert result.parse_successful is False
 
     def test_no_ecli_sets_other_scope(self) -> None:
@@ -176,3 +182,178 @@ class TestSplitSectionsDirect:
         # Sections may be None if all whitespace after strip
         # The important thing is no crash
         assert ok is True or ok is False  # Either is acceptable; no exception
+
+
+class TestSplitSectionsAutoFormat:
+    """Unit tests for the Auto/Providencia heading variant of split_sections."""
+
+    def test_hechos_razonamientos_la_sala_acuerda(self) -> None:
+        text = 'HECHOS\nA.\nRAZONAMIENTOS JURÍDICOS\nB.\nLA SALA ACUERDA:\nC.'
+        ant, fund, fal, ok = split_sections(text)
+        assert ok is True
+        assert ant is not None
+        assert fund is not None
+        assert fal is not None
+
+    def test_acuerda_variant(self) -> None:
+        text = 'HECHOS\nA.\nRAZONAMIENTOS JURÍDICOS\nB.\nACUERDA:\nC.'
+        _ant, _fund, fal, ok = split_sections(text)
+        assert ok is True
+        assert fal is not None
+
+    def test_se_acuerda_variant(self) -> None:
+        text = 'HECHOS\nA.\nRAZONAMIENTOS\nB.\nSE ACUERDA:\nC.'
+        _ant, _fund, fal, ok = split_sections(text)
+        assert ok is True
+        assert fal is not None
+
+    def test_fundamentos_juridicos_variant(self) -> None:
+        text = 'HECHOS\nA.\nFUNDAMENTOS JURÍDICOS\nB.\nACUERDA:\nC.'
+        _ant, fund, _fal, ok = split_sections(text)
+        assert ok is True
+        assert fund is not None
+
+    def test_only_hechos_not_parsed(self) -> None:
+        text = 'HECHOS\nFacts only.'
+        _ant, _fund, _fal, ok = split_sections(text)
+        assert ok is False
+
+    def test_case_insensitive_auto_headers(self) -> None:
+        text = 'hechos\nA.\nrazonamientos jurídicos\nB.\nla sala acuerda:\nC.'
+        ant, fund, fal, ok = split_sections(text)
+        assert ok is True
+        assert ant is not None
+        assert fund is not None
+        assert fal is not None
+
+    def test_sentencia_headers_still_work(self) -> None:
+        txt = (FIXTURES / 'ts_sentence.txt').read_text(encoding='utf-8')
+        _ant, _fund, _fal, ok = split_sections(txt)
+        assert ok is True
+
+    def test_real_auto_fixture_parsed(self) -> None:
+        txt = (FIXTURES / 'ts_ruling.txt').read_text(encoding='utf-8')
+        _ant, _fund, fal, ok = split_sections(txt)
+        assert ok is True
+        assert fal is not None
+        assert 'acuerda' in fal.lower()
+
+
+class TestDetectScope:
+    """Unit tests for _detect_scope."""
+
+    def test_ts_returns_ts_tc(self) -> None:
+        assert _detect_scope('ECLI:ES:TS:2024:1234') == 'ts_tc'
+
+    def test_tc_returns_ts_tc(self) -> None:
+        assert _detect_scope('ECLI:ES:TC:2024:1234') == 'ts_tc'
+
+    def test_an_returns_collegial(self) -> None:
+        assert _detect_scope('ECLI:ES:AN:2024:1234') == 'collegial'
+
+    def test_tsjm_returns_collegial(self) -> None:
+        assert _detect_scope('ECLI:ES:TSJM:2024:1234') == 'collegial'
+
+    def test_tsjcat_returns_collegial(self) -> None:
+        assert _detect_scope('ECLI:ES:TSJCAT:2024:1234') == 'collegial'
+
+    def test_apba_returns_collegial(self) -> None:
+        assert _detect_scope('ECLI:ES:APBA:2024:1234') == 'collegial'
+
+    def test_jpi_returns_other(self) -> None:
+        assert _detect_scope('ECLI:ES:JPI28:2024:1234') == 'other'
+
+    def test_none_returns_other(self) -> None:
+        assert _detect_scope(None) == 'other'
+
+    def test_invalid_prefix_returns_other(self) -> None:
+        assert _detect_scope('NOT-AN-ECLI') == 'other'
+
+
+class TestExtractHeaderMetadata:
+    """Unit tests for extract_header_metadata."""
+
+    def test_ts_ruling_fixture_metadata(self) -> None:
+        text = (FIXTURES / 'ts_ruling.txt').read_text(encoding='utf-8')
+        meta = extract_header_metadata(text)
+        assert meta is not None
+        assert meta.roj == 'ATS 3898/2026'
+        assert meta.ponente is not None and 'CORDOBA' in meta.ponente.upper()
+        assert meta.tipo_resolucion == 'Auto'
+        assert meta.fecha_raw == '20/04/2026'
+
+    def test_ts_sentence_fixture_metadata(self) -> None:
+        text = (FIXTURES / 'ts_sentence.txt').read_text(encoding='utf-8')
+        meta = extract_header_metadata(text)
+        assert meta is not None
+        assert meta.roj == 'STS 1234/2020'
+        assert meta.tipo_resolucion == 'Sentencia'
+
+    def test_tsj_sentence_fixture_metadata(self) -> None:
+        text = (FIXTURES / 'tsj_sentence.txt').read_text(encoding='utf-8')
+        meta = extract_header_metadata(text)
+        assert meta is not None
+        assert meta.organo is not None and 'Madrid' in meta.organo
+        assert meta.tipo_resolucion == 'Sentencia'
+
+    def test_returns_none_for_empty_text(self) -> None:
+        assert extract_header_metadata('') is None
+
+    def test_returns_none_for_prose_only(self) -> None:
+        assert extract_header_metadata('Some legal text without headers.') is None
+
+    def test_fecha_raw_preserved_as_string(self) -> None:
+        text = (FIXTURES / 'ts_ruling.txt').read_text(encoding='utf-8')
+        meta = extract_header_metadata(text)
+        assert meta is not None
+        assert meta.fecha_raw is not None
+        # DD/MM/YYYY format: 10 chars, two slashes at positions 2 and 5
+        assert len(meta.fecha_raw) == 10
+        assert meta.fecha_raw[2] == '/'
+        assert meta.fecha_raw[5] == '/'
+
+    def test_id_cendoj_extracted(self) -> None:
+        text = (FIXTURES / 'ts_ruling.txt').read_text(encoding='utf-8')
+        meta = extract_header_metadata(text)
+        assert meta is not None
+        assert meta.id_cendoj is not None
+        assert meta.id_cendoj.isdigit()
+
+
+class TestExtractSectionsCollegialScope:
+    """Tests for collegial tribunal scope via extract_sections."""
+
+    def test_tsjm_ecli_sets_collegial_scope(self) -> None:
+        txt = (FIXTURES / 'tsj_sentence.txt').read_text(encoding='utf-8')
+        result = extract_sections(_make_minimal_pdf(txt), ecli='ECLI:ES:TSJM:2020:1234')
+        assert result.tribunal_scope == 'collegial'
+
+    def test_an_ecli_sets_collegial_scope(self) -> None:
+        txt = (FIXTURES / 'an_sentence.txt').read_text(encoding='utf-8')
+        result = extract_sections(_make_minimal_pdf(txt), ecli='ECLI:ES:AN:2020:1234')
+        assert result.tribunal_scope == 'collegial'
+
+    def test_tsj_ecli_with_canonical_headers_can_parse(self) -> None:
+        txt = (FIXTURES / 'tsj_sentence.txt').read_text(encoding='utf-8')
+        result = extract_sections(_make_minimal_pdf(txt), ecli='ECLI:ES:TSJM:2024:9999')
+        assert result.tribunal_scope == 'collegial'
+        if result.parse_successful:
+            assert result.antecedentes is not None
+
+    def test_tsj_auto_can_parse(self) -> None:
+        txt = (FIXTURES / 'tsj_auto.txt').read_text(encoding='utf-8')
+        result = extract_sections(_make_minimal_pdf(txt), ecli='ECLI:ES:TSJM:2024:9999A')
+        assert result.tribunal_scope == 'collegial'
+        if result.parse_successful:
+            assert result.fallo is not None
+
+    def test_tsj_prose_only_not_parsed(self) -> None:
+        txt = (FIXTURES / 'tsj_ruling.txt').read_text(encoding='utf-8')
+        result = extract_sections(_make_minimal_pdf(txt), ecli='ECLI:ES:TSJM:2020:1234')
+        assert result.parse_successful is False
+
+    def test_jpi_ecli_returns_other_scope(self) -> None:
+        txt = (FIXTURES / 'tsj_ruling.txt').read_text(encoding='utf-8')
+        result = extract_sections(_make_minimal_pdf(txt), ecli='ECLI:ES:JPI28:2024:1234')
+        assert result.tribunal_scope == 'other'
+        assert result.parse_successful is False
