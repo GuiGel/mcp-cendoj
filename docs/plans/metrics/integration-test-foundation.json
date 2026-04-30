@@ -1,0 +1,229 @@
+{
+  "plan": "integration-test-foundation",
+  "created": "2026-04-30",
+  "completed": "2026-04-30",
+  "pr": "GuiGel/mcp-cendoj#6",
+  "status": "COMPLETED",
+  "branch": "feature/integration-test-foundation",
+  "tier": 0,
+  "agents_used": ["Integration Reviewer", "Performance Reviewer", "Security Reviewer (plan-challenger)"],
+  "phases": {
+    "phase1_prd": "skipped — no PRD (technical refactor)",
+    "phase2_technical": "completed — 4 brainstorming rounds with inline research",
+    "phase3_scope": "tier_0_solo — all context available from brainstorming",
+    "phase4_plan": "completed",
+    "phase5_metrics": "completed",
+    "phase6_validation": "completed — all 15 issues auto-resolved (Bucket A)"
+  },
+  "baseline": {
+    "test_count": 69,
+    "test_runtime_s": 11.3,
+    "branch_coverage_pct": "unknown — to be measured post-Layer-1",
+    "conftest_exists": false,
+    "transport_injection": false,
+    "mcp_integration_tests": 0
+  },
+  "targets": {
+    "test_runtime_s": 3,
+    "branch_coverage_pct": 80,
+    "mcp_integration_tests": 9,
+    "conftest_exists": true,
+    "transport_injection": true
+  },
+  "actuals": {
+    "commits": 5,
+    "tests_passed": 80,
+    "tests_xfailed": 1,
+    "tests_total": 81,
+    "branch_coverage_pct": 90.13,
+    "mcp_integration_tests": 10,
+    "conftest_exists": true,
+    "transport_injection": true,
+    "ci_lint_format": "pass",
+    "ci_type_check": "pass",
+    "ci_tests": "pass"
+  },
+  "key_decisions": {
+    "transport_class": "httpx.MockTransport(router.async_handler) — respx.Router is NOT httpx.AsyncBaseTransport (verified)",
+    "mcp_test_client": "mcp.shared.memory.create_connected_server_and_client_session — fastmcp not installed",
+    "result_error_field": "result.isError (camelCase) — verified from mcp.types.CallToolResult",
+    "injection_bridge": "_client module-level var in __init__.py — LLM never sees it, one monkeypatch controls all tools",
+    "no_sleep_target": "asyncio.sleep via monkeypatch.setattr — http.py uses module-level asyncio.sleep lookup",
+    "assert_all_mocked_kwarg": "assert_all_mocked=True verified at respx/router.py:44; enforcement works via async_handler→aresolve→resolver context manager (router.py:249)",
+    "mcp_shared_memory_import": "from mcp.shared.memory import create_connected_server_and_client_session — verified in venv"
+  },
+  "validation": {
+    "layer1_issues": 4,
+    "layer2_agents": 3,
+    "layer2_issues": 11,
+    "bucket_a_count": 15,
+    "bucket_b_count": 0,
+    "issues": [
+      {
+        "id": "L1-001",
+        "layer": 1,
+        "severity": "WARNING",
+        "category": "fixture-correctness",
+        "description": "Task F referenced ts_ruling.txt for document GET; correct fixture is ts_ruling.pdf",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Task F updated to reference ts_ruling.pdf; factory document_bytes param added"
+      },
+      {
+        "id": "L1-002",
+        "layer": 1,
+        "severity": "WARNING",
+        "category": "factory-extensibility",
+        "description": "make_cendoj_client factory had no way to mock the document GET route needed by get_ruling_text resource test",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Factory extended with document_url and document_bytes optional params; Task C snippet updated"
+      },
+      {
+        "id": "L1-003",
+        "layer": 1,
+        "severity": "WARNING",
+        "category": "fixture-conflict",
+        "description": "Task E did not mention removing local mem_cache fixture from test_document.py before injecting disk_cache",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Task E updated: explicitly remove local mem_cache fixture; use conftest disk_cache instead"
+      },
+      {
+        "id": "L1-004",
+        "layer": 1,
+        "severity": "INFO",
+        "category": "api-correctness",
+        "description": "Task F didn't clarify that read_resource() returns ReadResourceResult; assertion should use result.contents[0].text",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Task F updated to explicitly state result.contents[0].text assertion"
+      },
+      {
+        "id": "IR-001",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "library-api",
+        "description": "respx.Router(assert_all_mocked=True) kwarg name was unverified",
+        "reporting_agent": "Integration Reviewer",
+        "triage": "A",
+        "resolution_source": "codebase-verification",
+        "resolution": "Verified in .venv/lib/python3.13/site-packages/respx/router.py:44 — kwarg is assert_all_mocked, default True. FALSE POSITIVE — plan was already correct."
+      },
+      {
+        "id": "IR-002",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "library-api",
+        "description": "mcp.shared.memory import path was flagged as unverified",
+        "reporting_agent": "Integration Reviewer",
+        "triage": "A",
+        "resolution_source": "pre-verified",
+        "resolution": "Already verified in venv before plan was written. FALSE POSITIVE — import works correctly."
+      },
+      {
+        "id": "IR-003",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "async-sync",
+        "description": "monkeypatch.setattr(mcp_cendoj, '_client', client) was claimed to have incorrect syntax",
+        "reporting_agent": "Integration Reviewer",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "pytest.MonkeyPatch.setattr(obj, name, value) is correct 3-arg form. FALSE POSITIVE — reviewer was wrong."
+      },
+      {
+        "id": "IR-004",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "connection-params",
+        "description": "assert_all_mocked enforcement via async_handler was not verified",
+        "reporting_agent": "Integration Reviewer",
+        "triage": "A",
+        "resolution_source": "codebase-verification",
+        "resolution": "Verified: async_handler → aresolve → resolver context manager (router.py:241-264) → checks _assert_all_mocked at line 249. Enforcement DOES work through async_handler."
+      },
+      {
+        "id": "IR-005",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "code-completeness",
+        "description": "Task B did not explicitly state to add 'from mcp_cendoj.http import CendojClient' import",
+        "reporting_agent": "Integration Reviewer",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Task B updated with explicit import code snippet and type annotation"
+      },
+      {
+        "id": "PR-001",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "missing-validation",
+        "description": "No test to validate _no_sleep fixture actually patches asyncio.sleep",
+        "reporting_agent": "Performance Reviewer",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Added test_no_sleep_fixture_actually_patches smoke test to Task C acceptance criteria"
+      },
+      {
+        "id": "PR-002",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "test-isolation",
+        "description": "Tasks C and D must be committed together to avoid double-patching confusion",
+        "reporting_agent": "Performance Reviewer",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Added ATOMICITY REQUIREMENT block before Task D; both tasks must be in same commit"
+      },
+      {
+        "id": "PR-003",
+        "layer": 2,
+        "severity": "INFO",
+        "category": "suite-speed",
+        "description": "Suite speed target ~1s was unrealistic; non-sleep overhead not accounted for",
+        "reporting_agent": "Performance Reviewer",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Updated target to ≤3s in Task C, Test Plan table, and _no_sleep fixture docstring"
+      },
+      {
+        "id": "PC-001",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "test-isolation",
+        "description": "assert_all_mocked enforcement via async_handler was uncertain (same as IR-004)",
+        "reporting_agent": "Plan Challenger",
+        "triage": "A",
+        "resolution_source": "codebase-verification",
+        "resolution": "Verified: enforcement works. See IR-004. FALSE POSITIVE."
+      },
+      {
+        "id": "PC-002",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "network-safety",
+        "description": "mcp_session fixture had no guard against _client=None — silent real network access if test forgets injection",
+        "reporting_agent": "Plan Challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "mcp_session fixture updated with fail-loud sentinel: monkeypatch.setattr('mcp_cendoj._client', object()) before yielding session. Tests must override sentinel before calling any tool."
+      },
+      {
+        "id": "PC-003",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "test-atomicity",
+        "description": "Tasks C and D must be atomic commit (same as PR-002)",
+        "reporting_agent": "Plan Challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Consolidated with PR-002. See ATOMICITY REQUIREMENT block in plan."
+      }
+    ]
+  }
+}
