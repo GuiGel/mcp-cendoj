@@ -19,7 +19,7 @@ from mcp_cendoj.constants import (
     CendojSeccionAuto,
     CendojTipoResolucion,
 )
-from mcp_cendoj.http import CendojClient, CendojNetworkError
+from mcp_cendoj.http import CendojClient
 from mcp_cendoj.models import SearchResult
 
 
@@ -325,10 +325,12 @@ async def search_rulings(
             trimmed to the requested count. Values above 50 are clamped to 50.
         jurisdiccion: Legal branch. One of: 'CIVIL', 'PENAL', 'CONTENCIOSO',
             'SOCIAL', 'MILITAR', 'ESPECIAL'. Omit for all.
-        tipo_resolucion: Resolution type. One of: 'SENTENCIA', 'SENTENCIA
-            CASACION', 'SENTENCIA OTRAS', 'AUTO', 'AUTO ACLARATORIO',
+        tipo_resolucion: Resolution type. One of: 'SENTENCIA
+            CASACION', 'SENTENCIA OTRAS', 'AUTO ACLARATORIO',
             'AUTO RECURSO', 'AUTO ADMISION', 'AUTO INADMISION', 'AUTO OTROS',
-            'ACUERDO'. Omit for all types.
+            'ACUERDO'. Omit for all types. Note: parent-category values
+            'SENTENCIA' and 'AUTO' are not supported (CENDOJ returns no results
+            for them); use the specific subtypes above.
         tipo_organo: Court/tribunal code from TRIBUNAL_CODES. Examples:
             '14' = TS Social, '34' = TSJ Social, '44' = Juzgado Social,
             '11|12|13|14|15|16' = entire Tribunal Supremo. Omit for all courts.
@@ -427,6 +429,4 @@ async def search_rulings(
             await client.close()
 
     results = _parse_search_results(html)
-    if not results:
-        raise CendojNetworkError(f'No results returned for query: {query!r}')
     return results[:max_results]

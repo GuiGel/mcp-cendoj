@@ -225,21 +225,30 @@ CendojJurisdiccion = Literal['CIVIL', 'PENAL', 'CONTENCIOSO', 'SOCIAL', 'MILITAR
 """
 
 CendojTipoResolucion = Literal[
-    'AUTO',
     'AUTO ACLARATORIO',
     'AUTO RECURSO',
     'AUTO ADMISION',
     'AUTO INADMISION',
     'AUTO OTROS',
-    'SENTENCIA',
     'SENTENCIA CASACION',
     'SENTENCIA OTRAS',
     'ACUERDO',
 ]
 """Resolution type filter (SUBTIPORESOLUCION field).
 
-'SENTENCIA' covers all judgments; 'SENTENCIA CASACION' is cassation-only.
-'AUTO *' covers procedural orders. 'ACUERDO' covers agreements/accords.
+Only specific subtypes work as CENDOJ SUBTIPORESOLUCION filter values.
+The parent-category values 'SENTENCIA' and 'AUTO' are intentionally excluded
+because CENDOJ treats them as UI group labels and returns no results when they
+are submitted as SUBTIPORESOLUCION. Use the specific subtypes instead:
+
+- 'SENTENCIA CASACION'   — cassation judgments
+- 'SENTENCIA OTRAS'      — other judgments
+- 'AUTO ADMISION'        — admission orders
+- 'AUTO INADMISION'      — rejection orders
+- 'AUTO ACLARATORIO'     — clarification orders
+- 'AUTO RECURSO'         — appeal orders
+- 'AUTO OTROS'           — other orders
+- 'ACUERDO'              — agreements/accords
 """
 
 CendojIdioma = Literal['1', '2', '3', '4']
