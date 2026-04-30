@@ -12,6 +12,7 @@
 install: .uv .pre-commit
 	uv sync --frozen
 	pre-commit install --install-hooks
+	pre-commit install --hook-type pre-push
 
 .PHONY: format  # Format and auto-fix the code
 format:
