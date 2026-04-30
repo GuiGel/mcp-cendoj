@@ -146,5 +146,38 @@
     "blockers_resolved": 1,
     "warnings_resolved": 4,
     "all_bucket_a": true
+  },
+  "execution": {
+    "executed_at": "2026-04-30",
+    "branch": "feature/parser-coverage-expansion",
+    "commits": 6,
+    "files_changed": 12,
+    "lines_added": 574,
+    "lines_removed": 58,
+    "quality_gate": {
+      "ruff_lint": "pass",
+      "ruff_format": "pass",
+      "pyright_strict": "pass",
+      "pytest": "pass",
+      "coverage_branch": 91.43,
+      "fix_attempts": 0
+    },
+    "smoke_test": {
+      "result": "pass",
+      "parse_successful": true,
+      "tribunal_scope": "ts_tc",
+      "metadata_tipo_resolucion": "Auto"
+    },
+    "test_results": {
+      "passed": 129,
+      "xfailed": 1,
+      "failed": 0,
+      "new_tests_added": 33
+    },
+    "drift_score": 0.98,
+    "pr": {
+      "url": "https://github.com/GuiGel/mcp-cendoj/pull/9",
+      "title": "feat(parser): extend scope to collegial courts, add Auto format + PDF metadata extraction"
+    }
   }
 }
