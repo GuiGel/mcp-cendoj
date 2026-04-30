@@ -34,35 +34,5 @@
         "resolution": "Task D updated: Makefile install target now adds `pre-commit install --hook-type pre-push` as a second call; Test Plan row D updated accordingly"
       }
     ]
-  },
-  "execution": {
-    "executed_at": "2026-04-30T00:00:00Z",
-    "branch": "feature/coverage-gate-local",
-    "pr_number": 5,
-    "pr_url": "https://github.com/GuiGel/mcp-cendoj/pull/5",
-    "tdd_tasks": 0,
-    "layers": {
-      "layer_1": ["A - Update addopts in pyproject.toml", "B - Simplify make testcov"],
-      "layer_2": ["C - Add coverage-gate pre-push hook", "D - Update make install + re-install hooks"]
-    },
-    "diff_stats": {
-      "files_changed": 4,
-      "lines_added": 108,
-      "lines_removed": 2
-    },
-    "quality_gate": {
-      "lint": "pass",
-      "typecheck": "pass (3 warnings, 0 errors)",
-      "tests": "pass",
-      "fix_attempts": 0,
-      "coverage": "89.68%",
-      "coverage_threshold": "80%"
-    },
-    "integration_verification": {
-      "make_all": "pass",
-      "make_testcov": "pass",
-      "pre_push_hook_fired": true,
-      "pre_push_coverage_gate": "pass"
-    },
-    "drift_score": 1.0
   }
+}

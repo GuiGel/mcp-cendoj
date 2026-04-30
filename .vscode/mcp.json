@@ -1,22 +1,5 @@
 {
     "servers": {
-        "superset": {
-            "type": "http",
-            "url": "http://localhost:5008/mcp"
-        },
-        "superset-innova": {
-            "type": "http",
-            "url": "http://innovapre.tirant.net:5008/mcp"
-        },
-        "postgres": {
-            "command": "uvx",
-            "args": [
-                "--python", "3.12",
-                "postgres-mcp",
-                "postgresql://conversa:conversapassword@localhost:5432/conversa_analytics",
-                "--access-mode=unrestricted"
-            ]
-        },
         "logfire": {
             "command": "/opt/homebrew/bin/uvx", // or the absolute /path/to/uvx
             "args": ["logfire-mcp@latest"],
@@ -51,34 +34,17 @@
             "mcp/sequentialthinking"
             ]
         },
+        "mcp-cendoj": {
+            "type": "stdio",
+            "command": "uv",
+            "args": ["run", "mcp-cendoj"],
+            "cwd": "${workspaceFolder}"
+        },
         "hf-mcp-server": {
             "url": "https://huggingface.co/mcp",
             "headers": {
                 "Authorization": "Bearer ${env:HF_TOKEN}"
             }
         }
-        // "mcp-atlassian": {
-        //     "command": "docker",
-        //     "args": [
-        //         "run",
-        //         "-i",
-        //         "--rm",
-        //         "-e", "CONFLUENCE_URL",
-        //         "-e", "CONFLUENCE_USERNAME",
-        //         "-e", "CONFLUENCE_API_TOKEN",
-        //         "-e", "JIRA_URL",
-        //         "-e", "JIRA_USERNAME",
-        //         "-e", "JIRA_API_TOKEN",
-        //         "ghcr.io/sooperset/mcp-atlassian:latest"
-        //     ],
-        //     "env": {
-        //         "CONFLUENCE_URL": "https://your-company.atlassian.net/wiki",
-        //         "CONFLUENCE_USERNAME": "your.email@company.com",
-        //         "CONFLUENCE_API_TOKEN": "your_confluence_api_token",
-        //         "JIRA_URL": "https://your-company.atlassian.net",
-        //         "JIRA_USERNAME": "your.email@company.com",
-        //         "JIRA_API_TOKEN": "your_jira_api_token"
-        //     }
-        // },
     }
 }

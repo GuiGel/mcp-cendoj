@@ -148,7 +148,18 @@ actuals. These updates ship in the same MR as the feature.
 **Plan Archival**: move `docs/plans/plan-{name}.md` to
 `docs/plans/completed/plan-{name}.md`. Update the status header.
 
-Commit: `docs: reconcile PRD and archive plan for {feature-name}`.
+**Metrics**: write `docs/plans/metrics/{name}.json` with everything known at this
+point:
+- Task count and per-layer breakdown
+- TDD task count
+- Diff stats (files changed, lines added/removed)
+- Quality gate results (pass/fail, fix attempts)
+- Smoke test results
+- Drift score (0–1, how closely implementation matched plan)
+- Leave `pr_number`, `merge_commit`, `ci_pipeline_url`, and `merged_at` as `null` —
+  they cannot be known before merge and must not be fabricated.
+
+Commit all three together: `docs: reconcile PRD, archive plan and record metrics for {feature-name}`.
 
 ---
 
@@ -181,18 +192,33 @@ gh pr merge --squash --delete-branch
 
 ---
 
-## Step 7: Post-Merge Metrics
+## Step 7: Switch to Main, Pull, and Patch Metrics
 
-Switch back to main. Update `docs/plans/metrics/{name}.json` with:
-- Task count and per-layer breakdown
-- TDD task count
-- Diff stats (files changed, lines added/removed)
-- Quality gate results (pass/fail, fix attempts)
-- Smoke test results
-- Drift score (0–1, how closely implementation matched plan)
-- MR data (IID, merge commit, CI pipeline URL, timestamp)
+After the PR is merged, switch back to `main`, pull, then patch the metrics file
+with the now-available PR data:
 
-Commit metrics update.
+```bash
+git checkout main
+git pull origin main
+
+# Retrieve merge data using the PR number returned by the Create MR agent
+gh pr view {pr-number} --json number,mergeCommit,mergedAt \
+  --jq '{pr_number: .number, merge_commit: .mergeCommit.oid, merged_at: .mergedAt}'
+```
+
+Update `docs/plans/metrics/{name}.json`: fill in `pr_number`, `merge_commit`, and
+`merged_at` with the values above (replacing the `null` placeholders from Step 5).
+
+Commit and push directly to `main`:
+
+```bash
+git add docs/plans/metrics/{name}.json
+git commit -m "chore: patch metrics with merge data for {feature-name}"
+git push origin main
+```
+
+> If direct push to `main` is blocked by branch protection, open a `chore/metrics-{name}`
+> branch, push the single-file commit, and merge it immediately via `gh pr merge --squash`.
 
 ---
 

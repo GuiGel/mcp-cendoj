@@ -1,0 +1,28 @@
+{
+  "plan": "fix-resource-uri-template",
+  "created": "2026-04-30",
+  "tier": 0,
+  "tier_label": "Solo",
+  "agents_used": [],
+  "phases": {
+    "phase_1_prd_design": {
+      "notes": "No PRD. Production bug fix. No UI changes."
+    },
+    "phase_2_technical": {
+      "notes": "Inline research only. Verified three URI forms against Pydantic AnyUrl with UrlConstraints(host_required=False). Confirmed str() round-trip lossless for chosen form.",
+      "key_finding": "ReadResourceRequestParams.uri in mcp/types.py uses AnyUrl — server-side validation fails for any client sending cendoj://ECLI:...",
+      "adr": "ADR-0005"
+    },
+    "phase_3_scope": {
+      "tier": 0,
+      "rationale": "Single decorator argument change + test promotion. No new modules, no new dependencies, no DB, no auth."
+    },
+    "phase_4_plan": {
+      "tasks_total": 4,
+      "layers": 2
+    },
+    "phase_5_metrics": {
+      "completed": "2026-04-30"
+    }
+  }
+}
