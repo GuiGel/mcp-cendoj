@@ -5,6 +5,8 @@ from typing import Annotated
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
 
+from mcp_cendoj.cache import DiskCache
+from mcp_cendoj.http import CendojClient
 from mcp_cendoj.models import Ruling, SearchResult, SupersededResult
 from mcp_cendoj.tools.document import get_ruling_text as _document_impl
 from mcp_cendoj.tools.lookup import lookup_by_ecli as _lookup_impl
@@ -12,6 +14,9 @@ from mcp_cendoj.tools.search import search_rulings as _search_impl
 from mcp_cendoj.tools.superseded import check_if_superseded as _superseded_impl
 
 app = FastMCP('mcp-cendoj')
+
+_client: CendojClient | None = None  # set in tests via monkeypatch; None = prod default
+_disk_cache: DiskCache | None = None  # test-injectable cache for resource; None = prod default
 
 
 @app.tool()
@@ -24,7 +29,7 @@ async def lookup_by_ecli(ecli: str) -> Ruling:
     Returns:
         A Ruling with metadata and snippet text.
     """
-    return await _lookup_impl(ecli)
+    return await _lookup_impl(ecli, client=_client)
 
 
 @app.tool()
@@ -41,7 +46,7 @@ async def search_rulings(
     Returns:
         List of SearchResult objects ordered by ruling date descending.
     """
-    return await _search_impl(query, max_results)
+    return await _search_impl(query, max_results, client=_client)
 
 
 @app.tool()
@@ -56,7 +61,7 @@ async def check_if_superseded(ecli: str) -> SupersededResult:
     Returns:
         A SupersededResult with a mandatory disclaimer warning.
     """
-    return await _superseded_impl(ecli)
+    return await _superseded_impl(ecli, client=_client)
 
 
 @app.resource('cendoj://{ecli}')
@@ -72,7 +77,7 @@ async def get_ruling_text(ecli: str) -> Ruling:
     Returns:
         A Ruling with full PDF text extracted into RulingSections.
     """
-    return await _document_impl(ecli)
+    return await _document_impl(ecli, client=_client, cache=_disk_cache)
 
 
 def main() -> None:
