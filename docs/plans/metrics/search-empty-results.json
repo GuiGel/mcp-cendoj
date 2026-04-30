@@ -1,0 +1,140 @@
+{
+  "plan": "search-empty-results",
+  "created": "2026-04-30",
+  "tier": 0,
+  "agents": [],
+  "phases": {
+    "phase1_prd": "skipped (bug fix)",
+    "phase2_technical": "inline",
+    "phase3_scope": "Tier 0 - Solo",
+    "phase4_plan": "complete",
+    "phase5_metrics": "complete"
+  },
+  "validation": {
+    "validated_at": "2026-04-30",
+    "issues": [
+      {
+        "id": "S-001",
+        "layer": 1,
+        "severity": "BLOCKER",
+        "category": "adr-consistency",
+        "description": "Plan directly contradicts ADR-0002 §Required Hardening clause 7 without superseding it",
+        "reporting_agent": "structural",
+        "triage": "B",
+        "resolution_source": "human-decision",
+        "resolution": "User confirmed Option A (return []). ADR-0007 written to supersede ADR-0002 clause 7. ADR-0002 status updated."
+      },
+      {
+        "id": "C-001",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "adr-consistency",
+        "description": "Plan §Architecture claims 'No ADRs needed' while changing a decision explicitly recorded in ADR-0002",
+        "reporting_agent": "plan-challenger",
+        "triage": "B",
+        "resolution_source": "human-decision",
+        "resolution": "ADR-0007 created; plan §Architecture and §Decisions updated to reference it."
+      },
+      {
+        "id": "C-002",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "observability",
+        "description": "Parser regression and genuine zero-result query produce identical output after the change",
+        "reporting_agent": "plan-challenger",
+        "triage": "B",
+        "resolution_source": "human-decision",
+        "resolution": "Accepted risk. Documented in ADR-0007 §Consequences. Mitigated by live fixture integration tests mandated by ADR-0002."
+      },
+      {
+        "id": "C-003",
+        "layer": 2,
+        "severity": "BLOCKER",
+        "category": "architecture",
+        "description": "Plan presents false binary (raise wrong type vs return []); typed exception was a viable alternative",
+        "reporting_agent": "plan-challenger",
+        "triage": "B",
+        "resolution_source": "human-decision",
+        "resolution": "User chose Option A (return []) over typed exception approach. Recorded in ADR-0007."
+      },
+      {
+        "id": "C-004",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "test-coverage",
+        "description": "No MCP integration test for empty-results-as-success path through FastMCP serialisation layer",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Added test_search_rulings_empty_results_is_not_mcp_error to tests/test_mcp_integration.py"
+      },
+      {
+        "id": "C-005",
+        "layer": 2,
+        "severity": "WARNING",
+        "category": "architecture",
+        "description": "search_normas cited as implicit precedent but may itself be non-conformant with ADR-0002",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "ADR-0007 explicitly documents search_normas as already following the [] contract, legitimising the pattern for both tools."
+      },
+      {
+        "id": "C-006",
+        "layer": 2,
+        "severity": "INFO",
+        "category": "scope",
+        "description": "search_normas alignment not tracked as follow-up",
+        "reporting_agent": "plan-challenger",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "ADR-0007 §Scope documents search_normas as already conformant — no follow-up needed."
+      },
+      {
+        "id": "S-002",
+        "layer": 1,
+        "severity": "INFO",
+        "category": "doc-quality",
+        "description": "Line number references in plan tasks were approximate",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles",
+        "resolution": "Accepted — line references are informational; acceptance criteria define correctness."
+      }
+    ]
+  },
+  "execution": {
+    "executed_at": "2026-04-30",
+    "branch": "feature/search-empty-results",
+    "pr": {
+      "number": 12,
+      "url": "https://github.com/GuiGel/mcp-cendoj/pull/12",
+      "title": "fix(search): complete empty-results contract — docstring, MCP test, ADR-0007"
+    },
+    "layers": {
+      "layer_1": {
+        "tasks": 3,
+        "tdd_tasks": 0,
+        "note": "Task 1 (fix raise) and Task 3 (update test) were already committed in efb1fd0. Task 2 (docstring) applied here."
+      }
+    },
+    "commits": [
+      "e9bfd46 fix(search): update docstring and add ADR-0007 for empty-results contract",
+      "8eb254b docs: reconcile PRD and archive plan for search-empty-results"
+    ],
+    "diff_stats": {
+      "files_changed": 5,
+      "lines_added": 87,
+      "lines_removed": 3
+    },
+    "quality_gate": {
+      "ruff": "pass",
+      "pyright": "pass (0 errors, 6 pre-existing warnings)",
+      "pytest": "pass (130 passed, 1 xfailed)",
+      "coverage": "90.55% (gate: 80%)",
+      "fix_attempts": 0
+    },
+    "drift_score": 1.0,
+    "integration_verification": "mock-based, no HTTP calls required"
+  }
+}
