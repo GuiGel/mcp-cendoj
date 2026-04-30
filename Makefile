@@ -12,6 +12,7 @@
 install: .uv .pre-commit
 	uv sync --frozen
 	pre-commit install --install-hooks
+	pre-commit install --hook-type pre-push
 
 .PHONY: format  # Format and auto-fix the code
 format:
@@ -33,7 +34,7 @@ test:
 
 .PHONY: testcov  # Run tests and generate an HTML coverage report
 testcov:
-	uv run pytest --cov=mcp_cendoj --cov-report=html --cov-report=term-missing
+	uv run pytest --cov-report=html
 
 .PHONY: all  # Run format, lint, typecheck, and test
 all: format lint typecheck test

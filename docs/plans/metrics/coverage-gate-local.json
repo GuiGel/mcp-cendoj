@@ -1,0 +1,68 @@
+{
+  "plan": "coverage-gate-local",
+  "created_at": "2026-04-29T00:00:00Z",
+  "tier": 0,
+  "agents": [],
+  "phases": {
+    "phase_1_prd_analysis": "skipped (no PRD, no UI changes)",
+    "phase_2_technical_analysis": "inline (file reads: pyproject.toml, Makefile, .pre-commit-config.yaml, ci.yml)",
+    "phase_3_scope_assessment": "Tier 0 — Solo",
+    "phase_4_research_and_plan": "inline synthesis",
+    "phase_5_metrics": "2026-04-29T00:00:00Z"
+  },
+  "files_affected": [
+    "pyproject.toml",
+    "Makefile",
+    ".pre-commit-config.yaml"
+  ],
+  "tasks": 4,
+  "adrs_created": 0,
+  "validation": {
+    "validated_at": "2026-04-29T00:00:00Z",
+    "layer_1_issues": 1,
+    "layer_2_agents_triggered": 0,
+    "issues": [
+      {
+        "id": "S-001",
+        "layer": 1,
+        "severity": "BLOCKER",
+        "category": "agents-md-compliance",
+        "description": "make install never calls `pre-commit install --hook-type pre-push`; the pre-push gate would be silently absent for all fresh clones after Task C is merged",
+        "reporting_agent": "structural",
+        "triage": "A",
+        "resolution_source": "first-principles (AGENTS.md: quality gates must be enforced for all developers; make install is the authoritative setup command)",
+        "resolution": "Task D updated: Makefile install target now adds `pre-commit install --hook-type pre-push` as a second call; Test Plan row D updated accordingly"
+      }
+    ]
+  },
+  "execution": {
+    "executed_at": "2026-04-30T00:00:00Z",
+    "branch": "feature/coverage-gate-local",
+    "pr_number": 5,
+    "pr_url": "https://github.com/GuiGel/mcp-cendoj/pull/5",
+    "tdd_tasks": 0,
+    "layers": {
+      "layer_1": ["A - Update addopts in pyproject.toml", "B - Simplify make testcov"],
+      "layer_2": ["C - Add coverage-gate pre-push hook", "D - Update make install + re-install hooks"]
+    },
+    "diff_stats": {
+      "files_changed": 4,
+      "lines_added": 108,
+      "lines_removed": 2
+    },
+    "quality_gate": {
+      "lint": "pass",
+      "typecheck": "pass (3 warnings, 0 errors)",
+      "tests": "pass",
+      "fix_attempts": 0,
+      "coverage": "89.68%",
+      "coverage_threshold": "80%"
+    },
+    "integration_verification": {
+      "make_all": "pass",
+      "make_testcov": "pass",
+      "pre_push_hook_fired": true,
+      "pre_push_coverage_gate": "pass"
+    },
+    "drift_score": 1.0
+  }
