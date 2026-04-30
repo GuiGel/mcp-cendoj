@@ -1,7 +1,7 @@
 # ADR-0004: Section Extraction Scope and Fallback Strategy
 
 **Date**: 2026-04-29
-**Status**: Accepted
+**Status**: Partially superseded by [ADR-0006](ADR-0006-extended-parser-scope-and-auto-format.md) (`tribunal_scope` definition and parser scope extended)
 
 ## Context
 

@@ -60,6 +60,13 @@ A unified regex with both variants is tried; the first successful 3-section pars
 Sentencia headings take priority (tried first) to prevent partial matches on documents that
 contain both (e.g. Autos that quote a prior Sentencia in the Hechos section).
 
+**Heading order guard**: a regex match is accepted only if the three heading positions are
+strictly ordered (antecedentes < fundamentos < fallo). This prevents false-positive parses
+caused by CENDOJ PDFs that include a cover-page metadata block containing text such as
+`Fallo/Acuerdo: Auto no ha lugar`, which matches the `fallo` variant before the real body
+sections appear. Out-of-order positions indicate a cover-page artefact, not a valid section
+boundary; `_try_split_with_re` returns `(None, None, None, False)` in that case.
+
 ### 3. `DocumentMetadata` nested sub-model added to `RulingSections`
 
 ```python
