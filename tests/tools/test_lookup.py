@@ -1,9 +1,12 @@
 """Tests for the lookup_by_ecli tool."""
 
-from unittest.mock import AsyncMock
+from collections.abc import Callable
 
+import httpx
 import pytest
+import respx
 
+from mcp_cendoj.constants import CENDOJ_SEARCH_URL, CENDOJ_SESSION_INIT_URL
 from mcp_cendoj.http import CendojClient, CendojNetworkError
 from mcp_cendoj.tools.lookup import ECLIAmbiguousError, ECLINotFoundError, lookup_by_ecli
 
@@ -33,11 +36,10 @@ _TWO_RESULT_HTML = (
 _ZERO_RESULT_HTML = '<div class="resultswrapper"></div>'
 
 
-async def test_successful_lookup_returns_ruling() -> None:
-    mock_client = AsyncMock(spec=CendojClient)
-    mock_client.post.return_value = _ONE_RESULT_HTML
+async def test_successful_lookup_returns_ruling(make_cendoj_client: Callable[..., CendojClient]) -> None:
+    client = make_cendoj_client(_ONE_RESULT_HTML)
 
-    result = await lookup_by_ecli('ECLI:ES:TS:2020:1234', client=mock_client)
+    result = await lookup_by_ecli('ECLI:ES:TS:2020:1234', client=client)
 
     assert result.ecli == 'ECLI:ES:TS:2020:12345'
     assert result.cendoj_internal_id == '12345'
@@ -50,20 +52,18 @@ async def test_successful_lookup_returns_ruling() -> None:
     assert result.freshness == 'unknown'
 
 
-async def test_not_found_raises_ecli_not_found_error() -> None:
-    mock_client = AsyncMock(spec=CendojClient)
-    mock_client.post.return_value = _ZERO_RESULT_HTML
+async def test_not_found_raises_ecli_not_found_error(make_cendoj_client: Callable[..., CendojClient]) -> None:
+    client = make_cendoj_client(_ZERO_RESULT_HTML)
 
     with pytest.raises(ECLINotFoundError, match='ECLI:ES:TS:2020:1234'):
-        await lookup_by_ecli('ECLI:ES:TS:2020:1234', client=mock_client)
+        await lookup_by_ecli('ECLI:ES:TS:2020:1234', client=client)
 
 
-async def test_ambiguous_raises_ecli_ambiguous_error() -> None:
-    mock_client = AsyncMock(spec=CendojClient)
-    mock_client.post.return_value = _TWO_RESULT_HTML
+async def test_ambiguous_raises_ecli_ambiguous_error(make_cendoj_client: Callable[..., CendojClient]) -> None:
+    client = make_cendoj_client(_TWO_RESULT_HTML)
 
     with pytest.raises(ECLIAmbiguousError, match='2 results'):
-        await lookup_by_ecli('ECLI:ES:TS:2020:1234', client=mock_client)
+        await lookup_by_ecli('ECLI:ES:TS:2020:1234', client=client)
 
 
 async def test_invalid_ecli_format_raises_value_error() -> None:
@@ -77,8 +77,14 @@ async def test_injection_ecli_raises_value_error() -> None:
 
 
 async def test_network_error_propagates() -> None:
-    mock_client = AsyncMock(spec=CendojClient)
-    mock_client.post.side_effect = CendojNetworkError('connection failed')
+    def _raise_timeout(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout('network failure', request=request)
 
-    with pytest.raises(CendojNetworkError, match='connection failed'):
-        await lookup_by_ecli('ECLI:ES:TS:2020:1234', client=mock_client)
+    router = respx.Router(assert_all_mocked=True)
+    router.get(CENDOJ_SESSION_INIT_URL).respond(200, text='ok')
+    router.post(CENDOJ_SEARCH_URL).mock(side_effect=_raise_timeout)
+    client = CendojClient(transport=httpx.MockTransport(router.async_handler))
+
+    with pytest.raises(CendojNetworkError):
+        await lookup_by_ecli('ECLI:ES:TS:2020:1234', client=client)
+    await client.close()

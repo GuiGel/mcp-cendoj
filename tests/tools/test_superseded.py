@@ -1,10 +1,14 @@
 """Tests for src/mcp_cendoj/tools/superseded.py."""
 
+from collections.abc import Callable
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock
+from unittest.mock import patch
 
+import httpx
 import pytest
+import respx
 
+from mcp_cendoj.constants import CENDOJ_SEARCH_URL, CENDOJ_SESSION_INIT_URL
 from mcp_cendoj.http import CendojClient, CendojNetworkError
 from mcp_cendoj.models import SearchResult
 from mcp_cendoj.tools.superseded import check_if_superseded
@@ -22,11 +26,10 @@ def _make_result(ecli: str | None, snippet: str) -> SearchResult:
     )
 
 
-async def test_no_results_returns_not_superseded() -> None:
-    mock_client = AsyncMock(spec=CendojClient)
-    mock_client.post.return_value = '<div class="resultswrapper"></div>'
+async def test_no_results_returns_not_superseded(make_cendoj_client: Callable[..., CendojClient]) -> None:
+    client = make_cendoj_client('<div class="resultswrapper"></div>')
 
-    result = await check_if_superseded('ECLI:ES:TS:2020:1234', client=mock_client)
+    result = await check_if_superseded('ECLI:ES:TS:2020:1234', client=client)
 
     assert result.is_likely_superseded is False
     assert result.citations_found == 0
@@ -37,8 +40,6 @@ async def test_no_results_returns_not_superseded() -> None:
 
 
 async def test_reversal_language_triggers_superseded() -> None:
-    from unittest.mock import patch
-
     hit = _make_result('ECLI:ES:TS:2024:9999', 'La Sala revoca la sentencia de instancia.')
 
     with patch('mcp_cendoj.tools.superseded.search_rulings', return_value=[hit]):
@@ -49,8 +50,6 @@ async def test_reversal_language_triggers_superseded() -> None:
 
 
 async def test_self_reference_excluded() -> None:
-    from unittest.mock import patch
-
     self_ref = _make_result('ECLI:ES:TS:2020:1234', 'Se refiere a sí misma.')
     other = _make_result('ECLI:ES:TS:2024:9999', 'No hay revocación.')
 
@@ -62,8 +61,6 @@ async def test_self_reference_excluded() -> None:
 
 
 async def test_no_reversal_language_not_superseded() -> None:
-    from unittest.mock import patch
-
     neutral = _make_result('ECLI:ES:TS:2024:9999', 'Se cita la jurisprudencia anterior.')
 
     with patch('mcp_cendoj.tools.superseded.search_rulings', return_value=[neutral]):
@@ -78,8 +75,14 @@ async def test_invalid_ecli_raises() -> None:
 
 
 async def test_network_error_propagates() -> None:
-    mock_client = AsyncMock(spec=CendojClient)
-    mock_client.post.side_effect = CendojNetworkError('timeout')
+    def _raise_timeout(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout('network failure', request=request)
+
+    router = respx.Router(assert_all_mocked=True)
+    router.get(CENDOJ_SESSION_INIT_URL).respond(200, text='ok')
+    router.post(CENDOJ_SEARCH_URL).mock(side_effect=_raise_timeout)
+    client = CendojClient(transport=httpx.MockTransport(router.async_handler))
 
     with pytest.raises(CendojNetworkError):
-        await check_if_superseded('ECLI:ES:TS:2020:1234', client=mock_client)
+        await check_if_superseded('ECLI:ES:TS:2020:1234', client=client)
+    await client.close()
