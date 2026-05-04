@@ -1,7 +1,7 @@
 # ADR-0002: CENDOJ HTTP Integration Strategy
 
 **Date**: 2026-04-29
-**Status**: Accepted
+**Status**: Partially superseded by [ADR-0007](ADR-0007-empty-results-contract.md) (hardening clause §7 only)
 
 ## Context
 
@@ -27,7 +27,7 @@ Headless browser (option 2) is out of scope for the MVP — adds ~30 MB dependen
 - Exponential backoff on 429/503 (max 3 retries, jitter added).
 - Hard rate limit of 1 req/s via `asyncio.Semaphore` + `asyncio.sleep`.
 - `httpx.TimeoutException` wrapped in a domain-specific `CendojNetworkError`.
-- Empty result set treated as a distinct error, not a silent success.
+- ~~Empty result set treated as a distinct error, not a silent success.~~ **(superseded by ADR-0007)**
 
 ## Consequences
 

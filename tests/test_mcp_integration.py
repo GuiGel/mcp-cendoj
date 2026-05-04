@@ -173,6 +173,20 @@ async def test_search_rulings_network_error_is_mcp_error(
     assert result.isError
 
 
+async def test_search_rulings_empty_results_is_not_mcp_error(
+    make_cendoj_client: Callable[..., CendojClient],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = make_cendoj_client(_EMPTY_HTML)
+    async with _mcp_session(monkeypatch) as session:
+        monkeypatch.setattr(mcp_cendoj, '_client', client)
+
+        result = await session.call_tool('search_rulings', {'query': 'very specific query with no results'})
+
+    assert not result.isError
+    assert result.content == []
+
+
 # ---------------------------------------------------------------------------
 # lookup_by_ecli tests
 # ---------------------------------------------------------------------------
