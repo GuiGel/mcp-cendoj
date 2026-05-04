@@ -8,7 +8,10 @@
             }
         },
         "context7": {
-            "url": "https://mcp.context7.com/mcp"
+            "url": "https://mcp.context7.com/mcp",
+            "headers": {
+                "CONTEXT7_API_KEY": "${env:CONTEXT7_API_KEY}"
+            }
         },
         "playwright": {
             "command": "npx",
@@ -39,6 +42,10 @@
             "command": "uv",
             "args": ["run", "mcp-cendoj"],
             "cwd": "${workspaceFolder}"
+        },
+        "mcp-boe": {
+            "command": "uvx",
+            "args": ["--from", "git+https://github.com/ComputingVictor/MCP-BOE.git", "mcp-boe"]
         },
         "hf-mcp-server": {
             "url": "https://huggingface.co/mcp",
